@@ -25,19 +25,25 @@ const list = (bag: Bag, key: string) => (Array.isArray(bag[key]) ? (bag[key] as 
 
 // --- briques communes ------------------------------------------------------
 
-function Media({ tokens, ratio = '4 / 3', seed = 0 }: { tokens: SiteTokens; ratio?: string; seed?: number }) {
+function Media({ tokens, ratio = '4 / 3', seed = 0, src, alt = '' }: {
+  tokens: SiteTokens; ratio?: string; seed?: number; src?: string | null; alt?: string
+}) {
   const { colors } = tokens
   const tints = [colors.primary, colors.accent, colors.secondary]
   const a = tints[seed % tints.length]
   const b = tints[(seed + 1) % tints.length]
+  const frame: React.CSSProperties = { ...tokens.image(), aspectRatio: ratio, width: '100%' }
+
+  if (src) {
+    return (
+      <div style={frame}>
+        <img src={src} alt={alt} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+      </div>
+    )
+  }
   return (
     <div
-      style={{
-        ...tokens.image(),
-        aspectRatio: ratio,
-        width: '100%',
-        background: `linear-gradient(135deg, ${withAlpha(a, 0.55)}, ${withAlpha(b, 0.28)})`,
-      }}
+      style={{ ...frame, background: `linear-gradient(135deg, ${withAlpha(a, 0.55)}, ${withAlpha(b, 0.28)})` }}
       aria-hidden
     />
   )
@@ -59,13 +65,17 @@ function Head({ tokens, title, subtitle, align = 'left' }: {
   )
 }
 
-function Grid({ tokens, columns, children }: { tokens: SiteTokens; columns: number; children: ReactNode }) {
+const GAP: Record<string, number> = { tight: 12, normal: 24, loose: 40 }
+
+function Grid({ tokens, columns, gap = 'normal', children }: {
+  tokens: SiteTokens; columns: number; gap?: string; children: ReactNode
+}) {
   return (
     <div
       style={{
         display: 'grid',
         gridTemplateColumns: `repeat(${tokens.columns(columns)}, minmax(0, 1fr))`,
-        gap: `${tokens.scale(24)}px`,
+        gap: `${tokens.scale(GAP[gap] ?? 24)}px`,
       }}
     >
       {children}
@@ -136,12 +146,12 @@ function Hero({ project, tokens, bag }: Props & { bag: Bag }) {
         {layout === 'split' && showImage ? (
           <div style={{ display: 'grid', gridTemplateColumns: tokens.viewport === 'mobile' ? '1fr' : '1.1fr 1fr', gap: `${tokens.scale(40)}px`, alignItems: 'center' }}>
             {copy}
-            <Media tokens={tokens} ratio="5 / 4" />
+            <Media tokens={tokens} ratio="5 / 4" src={str(bag, 'imageUrl') || null} />
           </div>
         ) : layout === 'stacked' && showImage ? (
           <div style={{ display: 'grid', gap: `${tokens.scale(32)}px` }}>
             {copy}
-            <Media tokens={tokens} ratio="16 / 7" />
+            <Media tokens={tokens} ratio="16 / 7" src={str(bag, 'imageUrl') || null} />
           </div>
         ) : (
           copy
@@ -171,43 +181,81 @@ function About({ tokens, bag }: Props & { bag: Bag }) {
             {str(bag, 'text')}
           </p>
         </div>
-        {twoCols && <Media tokens={tokens} ratio="4 / 3" seed={1} />}
+        {twoCols && <Media tokens={tokens} ratio="4 / 3" seed={1} src={str(bag, 'imageUrl') || null} />}
       </div>
     </Shell>
   )
 }
 
+const RATIO: Record<string, string> = { square: '1 / 1', landscape: '4 / 3', portrait: '3 / 4' }
+const CARD_PADDING: Record<string, number> = { sm: 14, md: 18, lg: 26 }
+const CARD_TITLE: Record<string, number> = { sm: 16, md: 18, lg: 22 }
+
 function CatalogGrid({ project, tokens, bag, kind }: Props & { bag: Bag; kind: 'services' | 'products' | 'portfolio' | 'gallery' }) {
+  const grid = project.grid
   const items = catalogItems(project, kind)
-  const columns = num(bag, 'columns', kind === 'gallery' ? 4 : 3)
-  const centered = tokens.theme.nav === 'centered' || tokens.theme.hero === 'centered'
+  const columns = num(bag, 'columns', grid.columns)
+  const align = grid.align === 'center' ? 'center' : 'left'
   const showPrice = project.showPrices && (kind === 'products' || kind === 'services')
+  const ratio = kind === 'gallery' ? RATIO[grid.imageRatio] ?? '1 / 1' : RATIO[grid.imageRatio] ?? '4 / 3'
+
+  // Regroupement par categorie (§15) : seulement si le client a defini des
+  // categories et que la section le demande.
+  const grouped =
+    kind === 'products' && bool(bag, 'groupByCategory') && project.categories.length > 0 && project.products.length > 0
+
+  const card = (item: ReturnType<typeof catalogItems>[number], i: number) => (
+    <article key={item.id} style={{ ...tokens.card(), display: 'flex', flexDirection: 'column', textAlign: align }}>
+      <Media tokens={tokens} ratio={ratio} seed={i} src={item.imageUrl} alt={item.name} />
+      {kind !== 'gallery' && (
+        <div style={{ padding: `${tokens.scale(CARD_PADDING[grid.cardSize] ?? 18)}px` }}>
+          <h3 style={tokens.heading(CARD_TITLE[grid.cardSize] ?? 18)}>{item.name}</h3>
+          {item.description && (
+            <p style={{ marginTop: '6px', fontSize: `${tokens.scale(14)}px`, lineHeight: 1.6, color: tokens.muted }}>
+              {item.description}
+            </p>
+          )}
+          {showPrice && item.price !== null && (
+            <p style={{ marginTop: `${tokens.scale(12)}px`, fontWeight: 700, color: tokens.colors.primary, fontSize: `${tokens.scale(16)}px` }}>
+              {formatPrice(item.price, project.currency)}
+            </p>
+          )}
+        </div>
+      )}
+      {kind === 'gallery' && item.name && (
+        <div style={{ padding: `${tokens.scale(12)}px` }}>
+          <p style={{ fontSize: `${tokens.scale(14)}px`, fontWeight: 600 }}>{item.name}</p>
+        </div>
+      )}
+    </article>
+  )
 
   return (
     <Shell tokens={tokens} bag={bag}>
-      <Head tokens={tokens} title={str(bag, 'title')} subtitle={str(bag, 'subtitle')} align={centered ? 'center' : 'left'} />
-      <Grid tokens={tokens} columns={columns}>
-        {items.map((item, i) => (
-          <article key={item.id} style={{ ...tokens.card(), display: 'flex', flexDirection: 'column' }}>
-            <Media tokens={tokens} ratio={kind === 'gallery' ? '1 / 1' : '4 / 3'} seed={i} />
-            {kind !== 'gallery' && (
-              <div style={{ padding: `${tokens.scale(18)}px` }}>
-                <h3 style={tokens.heading(18)}>{item.name}</h3>
-                {item.description && (
-                  <p style={{ marginTop: '6px', fontSize: `${tokens.scale(14)}px`, lineHeight: 1.6, color: tokens.muted }}>
-                    {item.description}
-                  </p>
-                )}
-                {showPrice && item.price !== null && (
-                  <p style={{ marginTop: `${tokens.scale(12)}px`, fontWeight: 700, color: tokens.colors.primary, fontSize: `${tokens.scale(16)}px` }}>
-                    {formatPrice(item.price, project.currency)}
-                  </p>
-                )}
+      <Head tokens={tokens} title={str(bag, 'title')} subtitle={str(bag, 'subtitle')} align={align} />
+
+      {grouped ? (
+        <div style={{ display: 'grid', gap: `${tokens.scale(44)}px` }}>
+          {project.categories.map((category) => {
+            const inCategory = project.products.filter((p) => !p.hidden && p.categoryId === category.id)
+            if (!inCategory.length) return null
+            return (
+              <div key={category.id}>
+                <h3 style={{ ...tokens.heading(22), marginBottom: `${tokens.scale(18)}px` }}>{category.name}</h3>
+                <Grid tokens={tokens} columns={columns} gap={grid.gap}>
+                  {inCategory.map((p, i) =>
+                    card({ id: p.id, name: p.name, description: p.description, price: p.price, imageUrl: p.imageUrl, sample: false }, i),
+                  )}
+                </Grid>
               </div>
-            )}
-          </article>
-        ))}
-      </Grid>
+            )
+          })}
+        </div>
+      ) : (
+        <Grid tokens={tokens} columns={columns} gap={grid.gap}>
+          {items.map(card)}
+        </Grid>
+      )}
     </Shell>
   )
 }

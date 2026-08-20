@@ -1,10 +1,10 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  ArrowLeft, ArrowRight, Eye, FileText, Layers, Loader2, Monitor, Palette,
-  Redo2, Smartphone, Tablet, Tv, Undo2, User,
+  ArrowLeft, ArrowRight, Eye, FileText, Images, Layers, Loader2, Monitor, Package,
+  Palette, Redo2, Settings, Smartphone, Tablet, Tv, Undo2, User, Wrench,
 } from 'lucide-react'
-import type { Viewport } from '@/engine/types'
+import type { ModuleId, Viewport } from '@/engine/types'
 import SiteRenderer from '@/renderer/SiteRenderer'
 import { VIEWPORT_WIDTH } from '@/renderer/tokens'
 import { useProject } from '@/store/ProjectStore'
@@ -12,14 +12,22 @@ import StepBar from '@/ui/StepBar'
 import PagesPanel from './PagesPanel'
 import SectionsPanel from './SectionsPanel'
 import IdentityPanel from './IdentityPanel'
+import CatalogPanel from './CatalogPanel'
+import SettingsPanel from './SettingsPanel'
 import PropertiesPanel from './PropertiesPanel'
 
-type Tab = 'pages' | 'sections' | 'identity'
+type Tab = 'pages' | 'sections' | 'products' | 'services' | 'gallery' | 'identity' | 'settings'
 
-const TABS: { id: Tab; label: string; icon: typeof Layers }[] = [
+/** Onglets de la sidebar (§9). Un onglet catalogue n'apparait que si le module
+ *  correspondant est actif : la sidebar reste courte pour un metier simple. */
+const TABS: { id: Tab; label: string; icon: typeof Layers; requires?: ModuleId[] }[] = [
   { id: 'pages', label: 'Pages', icon: FileText },
   { id: 'sections', label: 'Sections', icon: Layers },
+  { id: 'products', label: 'Produits', icon: Package, requires: ['products', 'menu'] },
+  { id: 'services', label: 'Services', icon: Wrench, requires: ['services'] },
+  { id: 'gallery', label: 'Galerie', icon: Images, requires: ['gallery', 'portfolio'] },
   { id: 'identity', label: 'Informations', icon: User },
+  { id: 'settings', label: 'Paramètres', icon: Settings },
 ]
 
 const VIEWPORTS: { id: Viewport; label: string; icon: typeof Monitor }[] = [
@@ -37,10 +45,19 @@ export default function BuilderPage() {
   const navigate = useNavigate()
   const { project, dispatch, undo, redo, canUndo, canRedo, saving } = useProject()
 
+  const tabs = useMemo(
+    () => TABS.filter((t) => !t.requires || t.requires.some((m) => project.modules.includes(m))),
+    [project.modules],
+  )
   const [tab, setTab] = useState<Tab>('sections')
   const [viewport, setViewport] = useState<Viewport>('desktop')
   const [pageId, setPageId] = useState(() => project.pages.find((p) => p.isHome)?.id ?? project.pages[0]?.id ?? '')
   const [selectedId, setSelectedId] = useState<string | null>(null)
+
+  // Un module retire peut faire disparaitre l'onglet ouvert.
+  useEffect(() => {
+    if (!tabs.some((t) => t.id === tab)) setTab('sections')
+  }, [tabs, tab])
 
   const page = useMemo(
     () => project.pages.find((p) => p.id === pageId) ?? project.pages[0],
@@ -104,33 +121,45 @@ export default function BuilderPage() {
 
       <div className="flex min-h-0 flex-1">
         {/* SIDEBAR */}
-        <aside className="flex w-72 shrink-0 flex-col border-r border-line bg-surface">
-          <div className="flex shrink-0 border-b border-line">
-            {TABS.map(({ id, label, icon: Icon }) => (
+        <aside className="flex shrink-0 border-r border-line bg-surface">
+          {/* Rail d'icones : la liste des onglets grandira avec les modules. */}
+          <nav className="flex w-14 shrink-0 flex-col items-center gap-1 border-r border-line py-3">
+            {tabs.map(({ id, label, icon: Icon }) => (
               <button
                 key={id}
                 type="button"
+                title={label}
+                aria-label={label}
+                aria-pressed={tab === id}
                 onClick={() => setTab(id)}
-                className={`flex flex-1 flex-col items-center gap-1 py-3 text-[11px] font-semibold transition ${
-                  tab === id ? 'border-b-2 border-brand text-brand' : 'text-muted hover:text-ink'
+                className={`rounded-xl p-2.5 transition ${
+                  tab === id ? 'bg-brand/10 text-brand' : 'text-subtle hover:bg-canvas hover:text-ink'
                 }`}
               >
-                <Icon size={16} />
-                {label}
+                <Icon size={18} />
               </button>
             ))}
-          </div>
-
-          <div className="min-h-0 flex-1 overflow-y-auto">
-            {tab === 'pages' && <PagesPanel currentPageId={page.id} onSelect={(id) => { setPageId(id); setSelectedId(null) }} />}
-            {tab === 'sections' && <SectionsPanel page={page} selectedId={selectedId} onSelect={setSelectedId} />}
-            {tab === 'identity' && <IdentityPanel />}
-          </div>
-
-          <div className="shrink-0 border-t border-line p-3">
-            <button type="button" className="btn-ghost w-full !justify-start !py-2 text-xs" onClick={() => navigate('/creer/theme')}>
-              <Palette size={14} /> Changer de thème ou de couleurs
+            <button
+              type="button"
+              title="Thème et couleurs"
+              aria-label="Thème et couleurs"
+              onClick={() => navigate('/creer/theme')}
+              className="mt-auto rounded-xl p-2.5 text-subtle transition hover:bg-canvas hover:text-ink"
+            >
+              <Palette size={18} />
             </button>
+          </nav>
+
+          <div className="flex w-72 min-h-0 flex-col">
+            <div className="min-h-0 flex-1 overflow-y-auto">
+              {tab === 'pages' && <PagesPanel currentPageId={page.id} onSelect={(id) => { setPageId(id); setSelectedId(null) }} />}
+              {tab === 'sections' && <SectionsPanel page={page} selectedId={selectedId} onSelect={setSelectedId} />}
+              {tab === 'products' && <CatalogPanel catalog="products" />}
+              {tab === 'services' && <CatalogPanel catalog="services" />}
+              {tab === 'gallery' && <CatalogPanel catalog="gallery" />}
+              {tab === 'identity' && <IdentityPanel />}
+              {tab === 'settings' && <SettingsPanel />}
+            </div>
           </div>
         </aside>
 

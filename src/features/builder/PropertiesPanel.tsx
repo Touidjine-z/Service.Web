@@ -1,7 +1,9 @@
-import { Eye, EyeOff, Trash2 } from 'lucide-react'
+import { useState } from 'react'
+import { Eye, EyeOff, Image as ImageIcon, Trash2 } from 'lucide-react'
 import type { Page, Section } from '@/engine/types'
 import { SECTION_DEFS, resolveProps, type FieldDef } from '@/renderer/sectionDefs'
 import { useProject } from '@/store/ProjectStore'
+import MediaPicker from './MediaPicker'
 
 /**
  * Panneau de droite (§9). Il est entierement genere a partir du catalogue de
@@ -90,6 +92,27 @@ export default function PropertiesPanel({ page, section }: { page: Page; section
   )
 }
 
+function ImageField({ label, value, onChange }: { label: string; value: string; onChange: (v: unknown) => void }) {
+  const [picking, setPicking] = useState(false)
+  return (
+    <div>
+      <p className="mb-1 text-xs font-medium text-muted">{label}</p>
+      {value && <img src={value} alt="" className="mb-2 aspect-[3/2] w-full rounded-lg border border-line object-cover" />}
+      <div className="flex gap-2">
+        <button type="button" className="btn-secondary flex-1 !py-1.5 text-xs" onClick={() => setPicking(true)}>
+          <ImageIcon size={13} /> {value ? 'Changer' : 'Choisir'}
+        </button>
+        {value && (
+          <button type="button" className="rounded-lg px-2 text-subtle hover:text-red-600" onClick={() => onChange('')}>
+            <Trash2 size={13} />
+          </button>
+        )}
+      </div>
+      {picking && <MediaPicker onClose={() => setPicking(false)} onPick={(url) => onChange(url)} />}
+    </div>
+  )
+}
+
 function FieldControl({ field, value, onChange }: { field: FieldDef; value: unknown; onChange: (v: unknown) => void }) {
   if (field.type === 'boolean') {
     return (
@@ -133,6 +156,10 @@ function FieldControl({ field, value, onChange }: { field: FieldDef; value: unkn
         />
       </label>
     )
+  }
+
+  if (field.type === 'image') {
+    return <ImageField label={field.label} value={value ? String(value) : ''} onChange={onChange} />
   }
 
   if (field.type === 'list') {

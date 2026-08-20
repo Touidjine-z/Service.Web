@@ -232,6 +232,21 @@ export function reducer(project: Project, action: Action): Project {
       return touch({ ...project, products: [...project.products, copy] })
     }
 
+    case 'duplicateService': {
+      const source = project.services.find((s) => s.id === action.serviceId)
+      if (!source) return project
+      const copy: Service = { ...source, id: uid('svc'), name: `${source.name} (copie)`, order: project.services.length }
+      return touch({ ...project, services: [...project.services, copy] })
+    }
+
+    /** L'ordre du tableau fait foi ; `order` est resynchronise pour rester lisible. */
+    case 'moveCatalogItem': {
+      const list: { id: string; order: number }[] = project[action.catalog]
+      const index = list.findIndex((item) => item.id === action.itemId)
+      const next = move(list, index, action.direction).map((item, i) => ({ ...item, order: i }))
+      return touch({ ...project, [action.catalog]: next })
+    }
+
     case 'addService': {
       const service: Service = {
         id: uid('svc'),

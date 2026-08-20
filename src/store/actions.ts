@@ -35,6 +35,8 @@ export type Action =
   | { type: 'updateProduct'; productId: string; patch: Partial<Product> }
   | { type: 'removeProduct'; productId: string }
   | { type: 'duplicateProduct'; productId: string }
+  | { type: 'duplicateService'; serviceId: string }
+  | { type: 'moveCatalogItem'; catalog: 'products' | 'services' | 'gallery'; itemId: string; direction: -1 | 1 }
   | { type: 'addService'; service?: Partial<Service> }
   | { type: 'updateService'; serviceId: string; patch: Partial<Service> }
   | { type: 'removeService'; serviceId: string }

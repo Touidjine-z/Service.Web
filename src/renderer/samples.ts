@@ -11,12 +11,13 @@ export interface SampleItem {
   name: string
   description: string
   price: number | null
+  imageUrl: string | null
   sample: true
 }
 
 function make(names: [string, string][], prefix: string): SampleItem[] {
   return names.map(([name, description], i) => ({
-    id: `${prefix}_${i}`, name, description, price: null, sample: true,
+    id: `${prefix}_${i}`, name, description, price: null, imageUrl: null, sample: true,
   }))
 }
 
@@ -43,16 +44,16 @@ export const SAMPLE_WORKS = make([
 export function catalogItems(project: Project, kind: 'services' | 'products' | 'gallery' | 'portfolio') {
   if (kind === 'services') {
     return project.services.length
-      ? project.services.map((s) => ({ id: s.id, name: s.name, description: s.description, price: s.price, sample: false as const }))
+      ? project.services.map((s) => ({ id: s.id, name: s.name, description: s.description, price: s.price, imageUrl: s.imageUrl, sample: false as const }))
       : SAMPLE_SERVICES
   }
   if (kind === 'products') {
     return project.products.length
-      ? project.products.filter((p) => !p.hidden).map((p) => ({ id: p.id, name: p.name, description: p.description, price: p.price, sample: false as const }))
+      ? project.products.filter((p) => !p.hidden).map((p) => ({ id: p.id, name: p.name, description: p.description, price: p.price, imageUrl: p.imageUrl, sample: false as const }))
       : SAMPLE_PRODUCTS
   }
   if (project.gallery.length) {
-    return project.gallery.map((g) => ({ id: g.id, name: g.title, description: g.description, price: null, sample: false as const }))
+    return project.gallery.map((g) => ({ id: g.id, name: g.title, description: g.description, price: null, imageUrl: g.imageUrl || null, sample: false as const }))
   }
   return SAMPLE_WORKS
 }

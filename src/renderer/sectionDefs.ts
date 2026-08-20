@@ -18,6 +18,7 @@ export type FieldDef =
   | { key: string; label: string; type: 'select'; options: { value: string; label: string }[] }
   | { key: string; label: string; type: 'number'; min: number; max: number }
   | { key: string; label: string; type: 'list'; itemLabel: string; itemFields: ItemFieldDef[] }
+  | { key: string; label: string; type: 'image' }
 
 export interface SectionDef {
   kind: SectionKind
@@ -52,6 +53,7 @@ export const SECTION_DEFS: Record<SectionKind, SectionDef> = {
       { key: 'ctaLabel', label: 'Bouton principal', type: 'text' },
       { key: 'ctaSecondaryLabel', label: 'Bouton secondaire', type: 'text' },
       { key: 'showImage', label: 'Afficher une image', type: 'boolean' },
+      { key: 'imageUrl', label: 'Image', type: 'image' },
     ],
     defaults: (p) => ({
       title: businessName(p),
@@ -59,6 +61,7 @@ export const SECTION_DEFS: Record<SectionKind, SectionDef> = {
       ctaLabel: 'Nous contacter',
       ctaSecondaryLabel: 'Découvrir',
       showImage: true,
+      imageUrl: '',
     }),
   },
 
@@ -69,12 +72,14 @@ export const SECTION_DEFS: Record<SectionKind, SectionDef> = {
       { key: 'title', label: 'Titre', type: 'text' },
       { key: 'text', label: 'Texte', type: 'textarea' },
       { key: 'showImage', label: 'Afficher une image', type: 'boolean' },
+      { key: 'imageUrl', label: 'Image', type: 'image' },
       TONE,
     ],
     defaults: (p) => ({
       title: 'À propos',
       text: `${businessName(p)} accompagne ses clients avec exigence et proximité. Présentez ici votre parcours, votre équipe et ce qui vous distingue.`,
       showImage: true,
+      imageUrl: '',
       tone: 'default',
     }),
   },
@@ -87,7 +92,7 @@ export const SECTION_DEFS: Record<SectionKind, SectionDef> = {
       { key: 'subtitle', label: 'Sous-titre', type: 'text' },
       COLUMNS, TONE,
     ],
-    defaults: () => ({ title: 'Nos services', subtitle: 'Ce que nous réalisons pour vous', columns: 3, tone: 'alt' }),
+    defaults: (p) => ({ title: 'Nos services', subtitle: 'Ce que nous réalisons pour vous', columns: p.grid.columns, tone: 'alt' }),
   },
 
   products: {
@@ -103,7 +108,7 @@ export const SECTION_DEFS: Record<SectionKind, SectionDef> = {
       title: p.modules.includes('menu') ? 'Notre carte' : 'Nos produits',
       subtitle: '',
       groupByCategory: true,
-      columns: 3,
+      columns: p.grid.columns,
       tone: 'default',
     }),
   },
@@ -116,7 +121,7 @@ export const SECTION_DEFS: Record<SectionKind, SectionDef> = {
       { key: 'subtitle', label: 'Sous-titre', type: 'text' },
       COLUMNS, TONE,
     ],
-    defaults: () => ({ title: 'Nos réalisations', subtitle: 'Quelques projets récents', columns: 3, tone: 'default' }),
+    defaults: (p) => ({ title: 'Nos réalisations', subtitle: 'Quelques projets récents', columns: p.grid.columns, tone: 'default' }),
   },
 
   gallery: {
@@ -126,7 +131,7 @@ export const SECTION_DEFS: Record<SectionKind, SectionDef> = {
       { key: 'title', label: 'Titre', type: 'text' },
       COLUMNS, TONE,
     ],
-    defaults: () => ({ title: 'Galerie', columns: 4, tone: 'alt' }),
+    defaults: (p) => ({ title: 'Galerie', columns: Math.min(5, p.grid.columns + 1), tone: 'alt' }),
   },
 
   testimonials: {
