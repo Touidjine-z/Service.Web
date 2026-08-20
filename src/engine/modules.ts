@@ -53,6 +53,15 @@ export function modulesForObjectives(objectives: ObjectiveId[]): ModuleId[] {
   return MODULES.filter((m) => set.has(m.id)).map((m) => m.id)
 }
 
+/** Modules qu'au moins un objectif peut activer ou desactiver. */
+export const OBJECTIVE_GOVERNED_MODULES = new Set<ModuleId>(OBJECTIVES.flatMap((o) => o.unlocks))
+
+/** Remet une liste de modules dans l'ordre du catalogue, sans doublon. */
+export function orderModules(ids: ModuleId[]): ModuleId[] {
+  const set = new Set(ids)
+  return MODULES.filter((m) => set.has(m.id)).map((m) => m.id)
+}
+
 /** Sections rendues pour un jeu de modules actifs. */
 export function sectionsForModules(modules: ModuleId[]): SectionKind[] {
   const out: SectionKind[] = []

@@ -1,7 +1,10 @@
 import type { Activity, ColorScheme, Identity, Page, Project, Section, SectionKind, ModuleId } from './types'
 import { getActivity, CUSTOM_ACTIVITY } from './activities'
 import { getTheme } from './themes'
-import { isSectionAvailable } from './modules'
+import {
+  isSectionAvailable, MODULE_BY_ID, modulesForObjectives,
+  OBJECTIVE_GOVERNED_MODULES, orderModules,
+} from './modules'
 
 export function uid(prefix = 'id'): string {
   return `${prefix}_${Math.random().toString(36).slice(2, 10)}`
@@ -77,12 +80,29 @@ export function buildPages(activity: Activity, modules: ModuleId[]): Page[] {
   }))
 }
 
+/**
+ * Recalcule les modules apres un changement d'objectifs (§7 → §8).
+ * Les modules debloques par les objectifs retenus sont actives ; ceux qui ne
+ * sont plus justifies par aucun objectif sont retires, sauf les modules
+ * structurels.
+ */
+export function applyObjectives(project: Project, objectives: Project['objectives']): Project {
+  const wanted = modulesForObjectives(objectives)
+  // Un module qu'aucun objectif ne pilote (les horaires, par exemple) a ete
+  // choisi par le metier ou par le client : les objectifs n'ont pas a le retirer.
+  const kept = project.modules.filter((m) => !OBJECTIVE_GOVERNED_MODULES.has(m) || wanted.includes(m))
+  const modules = orderModules([...kept, ...wanted])
+  const added = modules.filter((m) => !project.modules.includes(m))
+  const next = syncPagesWithModules({ ...project, objectives, modules })
+  return addSectionsForModules(next, added)
+}
+
 /** Applique le choix du metier : objectifs suggeres, modules et pages par defaut. */
 export function applyActivity(project: Project, activityId: string, customLabel = ''): Project {
   const activity = activityId === 'custom' ? CUSTOM_ACTIVITY : getActivity(activityId)
   if (!activity) return project
   const modules = [...activity.defaultModules]
-  return {
+  const base: Project = {
     ...project,
     activityId: activity.id,
     customActivity: activityId === 'custom' ? customLabel : '',
@@ -90,6 +110,10 @@ export function applyActivity(project: Project, activityId: string, customLabel 
     modules,
     pages: buildPages(activity, modules),
   }
+  // Les objectifs suggeres doivent reellement activer leurs modules (§7 → §8) :
+  // sans ce passage, un metier pouvait proposer « recevoir des commandes » sans
+  // que le panier soit actif.
+  return applyObjectives(base, base.objectives)
 }
 
 /** Change de theme sans ecraser les couleurs deja personnalisees par le client. */
@@ -102,13 +126,37 @@ export function applyTheme(project: Project, themeId: Project['themeId'], keepCo
   }
 }
 
-/** Synchronise les pages apres un changement de modules : retire les sections
- *  orphelines, ajoute celles qui viennent d'etre debloquees sur l'accueil. */
+/** Retire des pages les sections dont le module n'est plus actif. */
 export function syncPagesWithModules(project: Project): Project {
   const pages = project.pages.map((page) => ({
     ...page,
     sections: page.sections.filter((s) => isSectionAvailable(s.kind, project.modules)),
   }))
+  return { ...project, pages }
+}
+
+/**
+ * Ajoute sur l'accueil la section des modules qui viennent d'etre actives,
+ * quand elle n'existe encore sur aucune page. Sans cela, activer une
+ * fonctionnalite ne changerait rien de visible dans l'apercu.
+ * Le client reste libre de la supprimer ensuite : rien ne la remettra.
+ */
+export function addSectionsForModules(project: Project, added: ModuleId[]): Project {
+  const kinds = added
+    .map((id) => MODULE_BY_ID.get(id)?.section)
+    .filter((kind): kind is SectionKind => Boolean(kind))
+  if (!kinds.length) return project
+
+  const present = new Set(project.pages.flatMap((page) => page.sections.map((s) => s.kind)))
+  const missing = kinds.filter((kind) => !present.has(kind))
+  if (!missing.length) return project
+
+  const homeIndex = Math.max(0, project.pages.findIndex((p) => p.isHome))
+  if (!project.pages[homeIndex]) return project
+
+  const pages = project.pages.map((page, i) =>
+    i === homeIndex ? { ...page, sections: [...page.sections, ...missing.map(createSection)] } : page,
+  )
   return { ...project, pages }
 }
 

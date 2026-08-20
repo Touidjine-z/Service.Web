@@ -1,10 +1,12 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, ArrowRight, Monitor, Smartphone, Tablet, Tv } from 'lucide-react'
-import type { Viewport } from '@/engine/types'
+import { ArrowLeft, ArrowRight, Monitor, ShoppingCart, Smartphone, Tablet, Tv } from 'lucide-react'
+import type { Product, Viewport } from '@/engine/types'
 import SiteRenderer from '@/renderer/SiteRenderer'
 import { VIEWPORT_WIDTH } from '@/renderer/tokens'
+import { addLine, cartCount, commerceEnabled, type CartLine } from '@/renderer/commerce'
 import { useProject } from '@/store/ProjectStore'
+import CartDrawer from './CartDrawer'
 
 const VIEWPORTS: { id: Viewport; label: string; icon: typeof Monitor }[] = [
   { id: 'desktop', label: 'Ordinateur', icon: Monitor },
@@ -23,6 +25,14 @@ export default function VisitorPage() {
   const { project, dispatch } = useProject()
   const [viewport, setViewport] = useState<Viewport>('desktop')
   const [slug, setSlug] = useState(() => project.pages.find((p) => p.isHome)?.slug ?? project.pages[0]?.slug ?? '')
+  const [cart, setCart] = useState<CartLine[]>([])
+  const [cartOpen, setCartOpen] = useState(false)
+
+  const commerce = commerceEnabled(project)
+  const addToCart = (product: Product) => {
+    setCart((lines) => addLine(lines, product, null))
+    setCartOpen(true)
+  }
 
   const page = project.pages.find((p) => p.slug === slug) ?? project.pages[0]
 
@@ -71,12 +81,18 @@ export default function VisitorPage() {
               className={`overflow-hidden bg-white shadow-card ${viewport === 'mobile' ? 'rounded-[2rem] border-8 border-slate-900' : 'rounded-2xl border border-line'}`}
               style={{ width: deviceWidth, transform: `scale(${scale})`, transformOrigin: 'top left' }}
             >
-              <SiteRenderer project={project} page={page} viewport={viewport} onNavigate={setSlug} />
+              <SiteRenderer
+                project={project} page={page} viewport={viewport} onNavigate={setSlug}
+                onAddToCart={commerce ? addToCart : undefined}
+              />
             </div>
           </div>
         ) : (
           <div ref={frameRef}>
-            <SiteRenderer project={project} page={page} viewport={viewport} onNavigate={setSlug} />
+            <SiteRenderer
+              project={project} page={page} viewport={viewport} onNavigate={setSlug}
+              onAddToCart={commerce ? addToCart : undefined}
+            />
           </div>
         )}
       </div>
@@ -108,6 +124,20 @@ export default function VisitorPage() {
             ))}
           </div>
 
+          {commerce && (
+            <>
+              <span className="h-6 w-px bg-line" />
+              <button type="button" className="btn-ghost relative !py-2 text-xs" onClick={() => setCartOpen(true)}>
+                <ShoppingCart size={14} /> Panier
+                {cartCount(cart) > 0 && (
+                  <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-brand px-1 text-[10px] font-bold text-brand-ink">
+                    {cartCount(cart)}
+                  </span>
+                )}
+              </button>
+            </>
+          )}
+
           <span className="h-6 w-px bg-line" />
 
           <button type="button" className="btn-primary !py-2 text-xs" onClick={() => navigate('/creer/final')}>
@@ -115,6 +145,10 @@ export default function VisitorPage() {
           </button>
         </div>
       </div>
+
+      {cartOpen && (
+        <CartDrawer project={project} lines={cart} onChange={setCart} onClose={() => setCartOpen(false)} />
+      )}
     </div>
   )
 }

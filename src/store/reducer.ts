@@ -1,6 +1,9 @@
 import type { Project, Page, Product, Service, GalleryItem } from '@/engine/types'
 import type { Action } from './actions'
-import { applyActivity, applyTheme, createEmptyProject, createSection, slugify, syncPagesWithModules, uid } from '@/engine/project'
+import {
+  addSectionsForModules, applyActivity, applyObjectives, applyTheme, createEmptyProject,
+  createSection, slugify, syncPagesWithModules, uid,
+} from '@/engine/project'
 import { MODULE_BY_ID } from '@/engine/modules'
 
 function touch(project: Project): Project {
@@ -44,19 +47,21 @@ export function reducer(project: Project, action: Action): Project {
       const objectives = project.objectives.includes(action.objective)
         ? project.objectives.filter((o) => o !== action.objective)
         : [...project.objectives, action.objective]
-      return touch({ ...project, objectives })
+      return touch(applyObjectives(project, objectives))
     }
 
     case 'setObjectives':
-      return touch({ ...project, objectives: action.objectives })
+      return touch(applyObjectives(project, action.objectives))
 
     case 'toggleModule': {
       const def = MODULE_BY_ID.get(action.module)
       if (def?.required && project.modules.includes(action.module)) return project
-      const modules = project.modules.includes(action.module)
+      const removing = project.modules.includes(action.module)
+      const modules = removing
         ? project.modules.filter((m) => m !== action.module)
         : [...project.modules, action.module]
-      return touch(syncPagesWithModules({ ...project, modules }))
+      const next = syncPagesWithModules({ ...project, modules })
+      return touch(removing ? next : addSectionsForModules(next, [action.module]))
     }
 
     case 'setTheme':

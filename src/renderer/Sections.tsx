@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import type { Project, Section } from '@/engine/types'
+import type { Product, Project, Section } from '@/engine/types'
 import { withAlpha } from '@/engine/color'
 import type { SiteTokens } from './tokens'
 import { resolveProps } from './sectionDefs'
@@ -15,6 +15,8 @@ interface Props {
   section: Section
   project: Project
   tokens: SiteTokens
+  /** Fourni quand le site accepte les commandes (modules cart / order). */
+  onAddToCart?: (product: Product) => void
 }
 
 type Bag = Record<string, unknown>
@@ -191,7 +193,7 @@ const RATIO: Record<string, string> = { square: '1 / 1', landscape: '4 / 3', por
 const CARD_PADDING: Record<string, number> = { sm: 14, md: 18, lg: 26 }
 const CARD_TITLE: Record<string, number> = { sm: 16, md: 18, lg: 22 }
 
-function CatalogGrid({ project, tokens, bag, kind }: Props & { bag: Bag; kind: 'services' | 'products' | 'portfolio' | 'gallery' }) {
+function CatalogGrid({ project, tokens, bag, kind, onAddToCart }: Props & { bag: Bag; kind: 'services' | 'products' | 'portfolio' | 'gallery' }) {
   const grid = project.grid
   const items = catalogItems(project, kind)
   const columns = num(bag, 'columns', grid.columns)
@@ -219,6 +221,19 @@ function CatalogGrid({ project, tokens, bag, kind }: Props & { bag: Bag; kind: '
             <p style={{ marginTop: `${tokens.scale(12)}px`, fontWeight: 700, color: tokens.colors.primary, fontSize: `${tokens.scale(16)}px` }}>
               {formatPrice(item.price, project.currency)}
             </p>
+          )}
+          {kind === 'products' && onAddToCart && !item.sample && (
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation()
+                const product = project.products.find((p) => p.id === item.id)
+                if (product) onAddToCart(product)
+              }}
+              style={{ ...tokens.button(), marginTop: `${tokens.scale(14)}px`, border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}
+            >
+              Ajouter
+            </button>
           )}
         </div>
       )}

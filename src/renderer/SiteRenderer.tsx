@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react'
-import type { Page, Project, Viewport } from '@/engine/types'
+import type { Page, Product, Project, Viewport } from '@/engine/types'
 import { getTheme } from '@/engine/themes'
 import { withAlpha } from '@/engine/color'
 import { createTokens, siteCssVars } from './tokens'
@@ -20,6 +20,8 @@ interface Props {
   selectedSectionId?: string | null
   onSelectSection?: (sectionId: string) => void
   onNavigate?: (slug: string) => void
+  /** Actif en mode visiteur quand le site accepte les commandes. */
+  onAddToCart?: (product: Product) => void
 }
 
 function Nav({ project, tokens, onNavigate, current }: {
@@ -138,7 +140,7 @@ function Footer({ project, tokens }: { project: Project; tokens: ReturnType<type
 }
 
 export default function SiteRenderer({
-  project, page, viewport = 'desktop', editable = false, selectedSectionId, onSelectSection, onNavigate,
+  project, page, viewport = 'desktop', editable = false, selectedSectionId, onSelectSection, onNavigate, onAddToCart,
 }: Props) {
   const theme = getTheme(project.themeId)
   const tokens = createTokens(theme, project.colors, viewport)
@@ -170,7 +172,7 @@ export default function SiteRenderer({
                 outlineOffset: '-2px',
               }}
             >
-              <SectionView section={section} project={project} tokens={tokens} />
+              <SectionView section={section} project={project} tokens={tokens} onAddToCart={onAddToCart} />
 
               {editable && (
                 <span

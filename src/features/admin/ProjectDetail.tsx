@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { ArrowLeft, Eye, History, Loader2, Monitor, RotateCcw, Smartphone, Tv } from 'lucide-react'
-import type { Project, ProjectStatus, Viewport } from '@/engine/types'
+import type { Order, Project, ProjectStatus, Viewport } from '@/engine/types'
 import { formatMoney } from '@/engine/pricing'
 import { getTheme } from '@/engine/themes'
 import { MODULE_BY_ID } from '@/engine/modules'
@@ -8,7 +8,7 @@ import { STATUSES, nextStatus, statusLabel } from '@/engine/status'
 import { sectionLabel } from '@/renderer/sectionDefs'
 import SiteRenderer from '@/renderer/SiteRenderer'
 import { VIEWPORT_WIDTH } from '@/renderer/tokens'
-import { listVersions, saveProject, snapshotVersion, type ProjectVersion } from '@/store/db'
+import { listOrders, listVersions, saveOrder, saveProject, snapshotVersion, type ProjectVersion } from '@/store/db'
 import { formatDate, type AdminRow } from './data'
 
 const VIEWPORTS: { id: Viewport; label: string; icon: typeof Monitor }[] = [
@@ -30,11 +30,18 @@ export default function ProjectDetail({ row, onBack, onChanged }: {
   const theme = getTheme(project.themeId)
   const [showPreview, setShowPreview] = useState(false)
   const [versions, setVersions] = useState<ProjectVersion[]>([])
+  const [orders, setOrders] = useState<Order[]>([])
   const [busy, setBusy] = useState(false)
 
   useEffect(() => {
     listVersions(project.id).then(setVersions).catch(() => undefined)
+    listOrders(project.id).then(setOrders).catch(() => undefined)
   }, [project.id])
+
+  async function setOrderStatus(order: Order, status: Order['status']) {
+    await saveOrder({ ...order, status }).catch(() => undefined)
+    setOrders(await listOrders(project.id).catch(() => []))
+  }
 
   async function changeStatus(status: ProjectStatus) {
     setBusy(true)
@@ -143,6 +150,49 @@ export default function ProjectDetail({ row, onBack, onChanged }: {
               ))}
             </ul>
           </Card>
+
+          {orders.length > 0 && (
+            <Card title={`Commandes reçues sur le site (${orders.length})`}>
+              <ul className="divide-y divide-line">
+                {orders.map((order) => (
+                  <li key={order.id} className="py-3">
+                    <div className="flex flex-wrap items-baseline justify-between gap-2">
+                      <div>
+                        <p className="text-sm font-medium text-ink">{order.customer.name}</p>
+                        <p className="text-xs text-subtle">
+                          {order.customer.email}{order.customer.phone ? ` · ${order.customer.phone}` : ''} · {formatDate(order.createdAt)}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-semibold text-ink">
+                          {order.total > 0 ? formatMoney(order.total, order.currency) : 'Sur devis'}
+                        </span>
+                        <select
+                          className="field !w-auto !py-1 text-xs"
+                          value={order.status}
+                          onChange={(e) => setOrderStatus(order, e.target.value as Order['status'])}
+                        >
+                          <option value="new">Nouvelle</option>
+                          <option value="accepted">Acceptée</option>
+                          <option value="done">Traitée</option>
+                          <option value="cancelled">Annulée</option>
+                        </select>
+                      </div>
+                    </div>
+                    <ul className="mt-1.5 text-xs text-muted">
+                      {order.lines.map((line, i) => (
+                        <li key={i}>
+                          {line.quantity} × {line.name}{line.variant ? ` (${line.variant})` : ''}
+                          {line.unitPrice !== null ? ` — ${formatMoney(line.unitPrice, order.currency)}` : ''}
+                        </li>
+                      ))}
+                    </ul>
+                    {order.customer.note && <p className="mt-1.5 text-xs italic text-subtle">« {order.customer.note} »</p>}
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          )}
 
           {(project.products.length > 0 || project.services.length > 0) && (
             <Card title="Catalogue">
