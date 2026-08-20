@@ -1,0 +1,100 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=Roboto+Slab:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Chrome de la plateforme (jamais le site du client). */
+    --ink: 15 23 42;
+    --muted: 71 85 105;
+    --subtle: 148 163 184;
+    --surface: 255 255 255;
+    --canvas: 248 250 252;
+    --line: 226 232 240;
+    --brand: 79 70 229;
+    --brand-ink: 255 255 255;
+  }
+
+  * { border-color: rgb(var(--line)); }
+
+  html { -webkit-text-size-adjust: 100%; }
+
+  body {
+    @apply bg-canvas text-ink font-sans antialiased;
+    margin: 0;
+  }
+
+  :focus-visible {
+    outline: 2px solid rgb(var(--brand));
+    outline-offset: 2px;
+  }
+
+  button { font: inherit; }
+}
+
+@layer components {
+  .container-page {
+    @apply mx-auto w-full max-w-6xl px-5 sm:px-8;
+  }
+
+  .card {
+    @apply rounded-2xl border border-line bg-surface shadow-card;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold transition;
+    @apply disabled:cursor-not-allowed disabled:opacity-40;
+  }
+
+  .btn-primary {
+    @apply btn bg-brand text-brand-ink hover:brightness-110 active:brightness-95;
+  }
+
+  .btn-secondary {
+    @apply btn border border-line bg-surface text-ink hover:bg-canvas;
+  }
+
+  .btn-ghost {
+    @apply btn text-muted hover:bg-canvas hover:text-ink;
+  }
+
+  .field {
+    @apply w-full rounded-xl border border-line bg-surface px-4 py-2.5 text-sm text-ink;
+    @apply placeholder:text-subtle focus:border-brand focus:outline-none focus:ring-4 focus:ring-brand/10;
+  }
+
+  .label {
+    @apply mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted;
+  }
+}
+
+/* Le rendu du site client vit dans son propre espace de tokens : aucune classe
+   de la plateforme ne doit fuir a l'interieur de la preview. */
+.site-root {
+  background: var(--site-background);
+  color: var(--site-text);
+  font-family: var(--site-body-font);
+}
+
+.site-root h1,
+.site-root h2,
+.site-root h3,
+.site-root h4 {
+  font-family: var(--site-heading-font);
+  font-weight: var(--site-heading-weight);
+  text-transform: var(--site-heading-transform);
+  letter-spacing: var(--site-letter-spacing);
+  margin: 0;
+}
+
+.site-root p { margin: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
