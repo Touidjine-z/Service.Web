@@ -98,3 +98,6 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Repere de section, visible seulement au survol pendant l'edition. */
+.section-shell:hover .section-tag { opacity: 1 !important; }

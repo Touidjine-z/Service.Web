@@ -1,6 +1,6 @@
 import type {
   Project, ObjectiveId, ModuleId, ThemeId, ColorScheme, Identity,
-  Section, Product, Service, Category, GalleryItem, GridSettings,
+  Page, Section, Product, Service, Category, GalleryItem, GridSettings,
   Currency, BuilderStep, Lead, SectionKind,
 } from '@/engine/types'
 
@@ -21,7 +21,8 @@ export type Action =
   | { type: 'duplicatePage'; pageId: string }
   | { type: 'movePage'; pageId: string; direction: -1 | 1 }
   | { type: 'setHomePage'; pageId: string }
-  | { type: 'addSection'; pageId: string; kind: SectionKind }
+  | { type: 'updatePageSeo'; pageId: string; seo: Partial<Page['seo']> }
+  | { type: 'addSection'; pageId: string; kind: SectionKind; index?: number }
   | { type: 'removeSection'; pageId: string; sectionId: string }
   | { type: 'moveSection'; pageId: string; sectionId: string; direction: -1 | 1 }
   | { type: 'reorderSections'; pageId: string; sections: Section[] }

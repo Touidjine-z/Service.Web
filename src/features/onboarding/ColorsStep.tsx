@@ -49,9 +49,8 @@ export default function ColorsStep() {
       title="Vos couleurs"
       subtitle="Ajustez chaque couleur, ou laissez-nous générer une palette harmonieuse à partir de votre couleur principale."
       back="/creer/theme"
-      canContinue={false}
-      nextLabel="Continuer"
-      hint="Étape suivante (Contenu) : en cours de développement"
+      next="/creer/site"
+      nextLabel="Construire mon site"
     >
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)]">
         <div>
@@ -113,7 +112,7 @@ export default function ColorsStep() {
             <ThemeThumbnail theme={theme} colors={project.colors} />
           </div>
           <p className="mt-3 text-xs text-subtle">
-            Aperçu réduit du thème {theme.name}. L'aperçu complet, navigable, arrive à l'étape Aperçu.
+            Aperçu réduit du thème {theme.name}. L'aperçu complet et navigable vous attend à l'étape suivante.
           </p>
         </aside>
       </div>

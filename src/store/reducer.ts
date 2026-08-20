@@ -138,8 +138,17 @@ export function reducer(project: Project, action: Action): Project {
         ),
       })
 
+    case 'updatePageSeo':
+      return touch(mapPage(project, action.pageId, (p) => ({ ...p, seo: { ...p.seo, ...action.seo } })))
+
     case 'addSection':
-      return touch(mapPage(project, action.pageId, (p) => ({ ...p, sections: [...p.sections, createSection(action.kind)] })))
+      return touch(
+        mapPage(project, action.pageId, (p) => {
+          const sections = [...p.sections]
+          sections.splice(action.index ?? sections.length, 0, createSection(action.kind))
+          return { ...p, sections }
+        }),
+      )
 
     case 'removeSection':
       return touch(mapPage(project, action.pageId, (p) => ({ ...p, sections: p.sections.filter((s) => s.id !== action.sectionId) })))
