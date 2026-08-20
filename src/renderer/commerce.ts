@@ -1,4 +1,5 @@
 import type { Order, OrderLine, Product, Project } from '@/engine/types'
+import { resolveProps } from './sectionDefs'
 
 /**
  * Panier du site du client (modules `cart` / `order`). Le panier vit dans le
@@ -44,17 +45,42 @@ export function isPriced(lines: CartLine[]): boolean {
   return lines.length > 0 && lines.every((l) => l.unitPrice !== null)
 }
 
+/**
+ * Modes de service proposes par le site du client (livraison, a emporter, sur
+ * place...). Ils sont lus dans la section « Modes de service » telle que le
+ * client l'a reglee : le tunnel de commande ne reinvente aucun libelle.
+ */
+export function serviceModes(project: Project): string[] {
+  if (!project.modules.includes('ordermodes')) return []
+  for (const page of project.pages) {
+    for (const section of page.sections) {
+      if (section.kind !== 'ordermodes' || section.hidden) continue
+      const items = resolveProps(section, project).items
+      if (!Array.isArray(items)) continue
+      const names = items
+        .map((item) => String((item as Record<string, unknown>).name ?? '').trim())
+        .filter(Boolean)
+      if (names.length) return names
+    }
+  }
+  return []
+}
+
 export function buildOrder(
   project: Project,
   lines: CartLine[],
   customer: Order['customer'],
   id: string,
+  service = '',
+  slot = '',
 ): Order {
   return {
     id,
     projectId: project.id,
     createdAt: new Date().toISOString(),
     customer,
+    ...(service ? { service } : {}),
+    ...(slot ? { slot } : {}),
     lines: lines.map(({ key: _key, ...line }) => line),
     total: cartTotal(lines),
     currency: project.currency,

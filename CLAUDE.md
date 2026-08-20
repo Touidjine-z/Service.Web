@@ -1953,3 +1953,82 @@ PRÉVISUALISATION
 CONVERSION
 +
 ARCHITECTURE SCALABLE.
+
+
+==================================================
+59. NOM DE DOMAINE
+==================================================
+
+À la toute fin du parcours, après la révélation du prix et avant l'acompte,
+proposer au client de choisir son nom de domaine.
+
+C'est la dernière décision qui lui appartient :
+
+"Votre site est prêt."
+↓
+"Voici le prix de réalisation."
+↓
+"Quelle sera son adresse sur Internet ?"
+↓
+Acompte
+↓
+Paiement
+
+Proposer une adresse à partir de son enseigne, à défaut de son métier et de sa
+ville, et la tester sur les extensions courantes : .fr, .com, .net, .eu, .shop,
+.pro. Il doit aussi pouvoir taper le nom complet qu'il a en tête.
+
+Pour chaque proposition, afficher :
+
+- la disponibilité ;
+- le prix de la première année ;
+- le prix de renouvellement.
+
+Trois issues, aucune bloquante :
+
+- réserver ce domaine avec nous ;
+- déclarer un domaine déjà possédé, que nous raccorderons ;
+- décider plus tard.
+
+Le domaine ne doit JAMAIS bloquer la réalisation.
+
+La disponibilité et les prix viennent de l'API GoDaddy :
+
+GET https://api.godaddy.com/v3/domains/check-availability?domain=example.com
+Authorization: Bearer $GODADDY_PAT
+
+Réponse :
+
+{
+  "domain": "example.com",
+  "available": true,
+  "prices": [
+    {
+      "term": "YEAR",
+      "period": 1,
+      "price": { "currencyCode": "USD", "value": 1199 },
+      "renewalPrice": { "currencyCode": "USD", "value": 2299 }
+    }
+  ]
+}
+
+IMPORTANT :
+
+La clé ne doit jamais descendre dans le navigateur. Elle est détenue par un
+relais serveur qui ajoute l'en-tête d'autorisation.
+
+Tant qu'aucune clé n'est configurée, la vérification est simulée et l'écran le
+dit au client, exactement comme le paiement.
+
+TARIFICATION :
+
+Le devis ne facture QUE notre travail : réservation et configuration du domaine,
+montant éditable en administration comme tous les autres.
+
+Le prix du domaine lui-même appartient au registrar, dans sa devise. Il est
+affiché à part et n'entre pas dans le prix de réalisation.
+
+ADMINISTRATION :
+
+Le domaine retenu apparaît dans la fiche du projet : c'est l'administrateur qui
+procède ensuite à la réservation.

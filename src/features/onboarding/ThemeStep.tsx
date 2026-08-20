@@ -51,7 +51,7 @@ export default function ThemeStep() {
               ].join(' ')}
             >
               <div className="relative aspect-[4/3] overflow-hidden border-b border-line">
-                <ThemeThumbnail theme={theme} colors={active ? project.colors : theme.colors} />
+                <ThemeThumbnail theme={theme} colors={active ? project.colors : theme.colors} fontPair={project.fontPair} />
                 {active && (
                   <span className="absolute right-2 top-2 grid h-6 w-6 place-items-center rounded-full bg-brand text-brand-ink shadow">
                     <Check size={13} strokeWidth={3} />

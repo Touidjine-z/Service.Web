@@ -9,6 +9,8 @@ import SiteRenderer from '@/renderer/SiteRenderer'
 import { VIEWPORT_WIDTH } from '@/renderer/tokens'
 import { useProject } from '@/store/ProjectStore'
 import StepBar from '@/ui/StepBar'
+import Confetti from '@/ui/Confetti'
+import { Reveal } from '@/ui/motion'
 import SaveProjectDialog from './SaveProjectDialog'
 
 /**
@@ -21,6 +23,8 @@ export default function FinalPage() {
   const { project, quote, dispatch } = useProject()
   const [askLead, setAskLead] = useState(false)
   const [requesting, setRequesting] = useState(false)
+  /** Celebration jouee une seule fois, au clic sur « Voir le prix ». */
+  const [celebrate, setCelebrate] = useState(false)
 
   const home = project.pages.find((p) => p.isHome) ?? project.pages[0]
   const theme = getTheme(project.themeId)
@@ -56,6 +60,15 @@ export default function FinalPage() {
     },
   ]
 
+  // Le domaine n'apparait qu'une fois choisi : avant, il n'a rien a dire (§59).
+  const domain = project.domain
+  if (domain && domain.status !== 'later' && domain.name) {
+    checklist.push({
+      label: 'Nom de domaine',
+      detail: domain.status === 'owned' ? `${domain.name} (le vôtre)` : domain.name,
+    })
+  }
+
   function request() {
     if (!project.lead) {
       setAskLead(true)
@@ -63,16 +76,19 @@ export default function FinalPage() {
     }
     setRequesting(true)
     dispatch({ type: 'setStatus', status: 'requested' })
-    navigate('/paiement')
+    // Le nom de domaine (§59) s'intercale entre la demande et l'acompte : c'est
+    // la derniere decision qui appartient encore au client.
+    navigate('/creer/domaine')
   }
 
   return (
     <div className="min-h-screen bg-canvas">
+      {celebrate && <Confetti />}
       <StepBar current="final" />
 
       <main className="container-page py-12">
-        <header className="mx-auto max-w-2xl text-center">
-          <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand/10 text-brand">
+        <header className="mx-auto max-w-2xl text-center animate-fade-up">
+          <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand/10 text-brand animate-pop-in">
             <Sparkles size={26} />
           </div>
           <h1 className="text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">
@@ -85,13 +101,13 @@ export default function FinalPage() {
         </header>
 
         <div className="mt-10 grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)]">
-          <section>
+          <Reveal as="section">
             <p className="label">Aperçu de votre site</p>
             <SitePreview />
             <button type="button" className="btn-ghost mt-3 !px-0 text-xs" onClick={() => navigate('/apercu')}>
               <ArrowLeft size={14} /> Revoir mon site en entier
             </button>
-          </section>
+          </Reveal>
 
           <aside className="lg:sticky lg:top-6 lg:self-start">
             <div className="card p-5">
@@ -123,13 +139,17 @@ export default function FinalPage() {
                 <p className="text-sm leading-relaxed text-muted">
                   Votre maquette est terminée. Découvrez maintenant le coût de sa réalisation.
                 </p>
-                <button type="button" className="btn-primary mt-4 w-full" onClick={() => dispatch({ type: 'revealPrice' })}>
+                <button
+                  type="button"
+                  className="btn-primary mt-4 w-full"
+                  onClick={() => { setCelebrate(true); dispatch({ type: 'revealPrice' }) }}
+                >
                   Voir le prix de réalisation
                 </button>
                 <p className="mt-2 text-[11px] text-subtle">Sans engagement.</p>
               </div>
             ) : (
-              <div className="card mt-4 overflow-hidden">
+              <div className="card mt-4 overflow-hidden animate-pop-in">
                 <div className="border-b border-line px-5 py-4">
                   <p className="label mb-0">Votre projet</p>
                   <p className="text-sm font-semibold text-ink">Site professionnel</p>
@@ -183,7 +203,7 @@ export default function FinalPage() {
           onSaved={() => {
             dispatch({ type: 'setStatus', status: 'requested' })
             setAskLead(false)
-            navigate('/paiement')
+            navigate('/creer/domaine')
           }}
         />
       )}

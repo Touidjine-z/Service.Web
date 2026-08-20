@@ -1,6 +1,6 @@
 import Dexie, { type Table } from 'dexie'
 import type { Project, Lead, Order, Payment } from '@/engine/types'
-import type { PricingRules } from '@/engine/pricing'
+import { DEFAULT_PRICING_RULES, type PricingRules } from '@/engine/pricing'
 
 /**
  * Persistance locale. Le client construit gratuitement, sans compte ni
@@ -146,10 +146,29 @@ export async function deleteVersion(id: number): Promise<void> {
 
 const PRICING_KEY = 'pricingRules'
 
-/** Regles de tarification en vigueur ; les defauts servent de repli (§38). */
+/**
+ * Regles de tarification en vigueur ; les defauts servent de repli (§38).
+ *
+ * FUSION, pas remplacement : un administrateur qui avait deja enregistre ses
+ * tarifs a un objet sans la cle `plans` (arrivee avec les formules, §60). Sans
+ * cette fusion, un site modele serait facture au tarif du sur-mesure, a
+ * l'instant precis ou le client decouvre son prix. Ses propres montants, eux,
+ * gagnent toujours : ils sont etales par-dessus les defauts.
+ */
 export async function loadPricingRules(): Promise<PricingRules | null> {
   const row = await db.settings.get(PRICING_KEY)
-  return (row?.value as PricingRules) ?? null
+  const stored = row?.value as PricingRules | undefined
+  if (!stored) return null
+  return mergePricingRules(stored)
+}
+
+/** Regles stockees completees par les defauts, formule par formule. */
+export function mergePricingRules(stored: PricingRules): PricingRules {
+  return {
+    ...DEFAULT_PRICING_RULES,
+    ...stored,
+    plans: { ...DEFAULT_PRICING_RULES.plans!, ...stored.plans },
+  }
 }
 
 export async function savePricingRules(rules: PricingRules, changes: Omit<PricingChange, 'id'>[] = []): Promise<void> {

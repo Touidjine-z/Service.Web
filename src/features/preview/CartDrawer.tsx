@@ -3,8 +3,11 @@ import { Check, Loader2, Minus, Plus, ShoppingCart, Trash2, X } from 'lucide-rea
 import type { Order, Project } from '@/engine/types'
 import { uid } from '@/engine/project'
 import { formatPrice } from '@/renderer/samples'
-import { buildOrder, cartTotal, isPriced, setQuantity, type CartLine } from '@/renderer/commerce'
+import { buildOrder, cartTotal, isPriced, serviceModes, setQuantity, type CartLine } from '@/renderer/commerce'
 import { saveOrder } from '@/store/db'
+
+/** Creneaux proposes quand le site affiche des modes de service. */
+const SLOTS = ['Dès que possible', 'Dans 30 minutes', 'Dans 1 heure', 'Plus tard dans la journée']
 
 /**
  * Panier et tunnel de commande du site du client. Quand aucun produit n'a de
@@ -21,16 +24,24 @@ export default function CartDrawer({ project, lines, onChange, onClose }: {
   const [sending, setSending] = useState(false)
   const [order, setOrder] = useState<Order | null>(null)
   const [customer, setCustomer] = useState({ name: '', email: '', phone: '', note: '' })
+  // Modes de service (livraison, a emporter...) : ils viennent du site du
+  // client, pas d'une liste figee du tunnel.
+  const modes = serviceModes(project)
+  const [service, setService] = useState(modes[0] ?? '')
+  const [slot, setSlot] = useState(SLOTS[0])
 
   const total = cartTotal(lines)
   const priced = isPriced(lines)
+  // Le panier est vide une fois la commande partie : la confirmation doit lire
+  // la commande envoyee, sinon elle annonce un devis pour une commande chiffree.
+  const sentPriced = order ? order.lines.every((line) => line.unitPrice !== null) : priced
   const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(customer.email)
   const canSend = customer.name.trim().length >= 2 && emailValid && lines.length > 0
 
   async function send() {
     if (!canSend || sending) return
     setSending(true)
-    const built = buildOrder(project, lines, customer, uid('ord'))
+    const built = buildOrder(project, lines, customer, uid('ord'), modes.length ? service : '', modes.length ? slot : '')
     await saveOrder(built).catch(() => undefined)
     setOrder(built)
     setSending(false)
@@ -61,16 +72,48 @@ export default function CartDrawer({ project, lines, onChange, onClose }: {
             </div>
             <p className="text-base font-semibold text-ink">Merci !</p>
             <p className="text-sm leading-relaxed text-muted">
-              {priced
+              {sentPriced
                 ? 'Votre commande a bien été transmise. Vous recevrez une confirmation par email.'
                 : 'Votre demande a bien été transmise. Vous recevrez un devis par email.'}
             </p>
+            {order?.service && (
+              <p className="text-sm font-medium text-ink">
+                {order.service}{order.slot ? ` — ${order.slot.toLowerCase()}` : ''}
+              </p>
+            )}
             {order && <p className="text-xs text-subtle">Référence {order.id.slice(-6).toUpperCase()}</p>}
             <button type="button" className="btn-secondary mt-2" onClick={onClose}>Fermer</button>
           </div>
         ) : step === 'form' ? (
           <>
             <div className="flex-1 space-y-3 overflow-y-auto p-5">
+              {modes.length > 0 && (
+                <>
+                  <div>
+                    <p className="mb-1 text-xs font-medium text-muted">Mode de service</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {modes.map((mode) => (
+                        <button
+                          key={mode}
+                          type="button"
+                          onClick={() => setService(mode)}
+                          className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${
+                            mode === service ? 'bg-brand text-brand-ink' : 'bg-canvas text-muted hover:text-ink'
+                          }`}
+                        >
+                          {mode}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <label className="block text-xs font-medium text-muted">
+                    Créneau souhaité
+                    <select className="field mt-1" value={slot} onChange={(e) => setSlot(e.target.value)}>
+                      {SLOTS.map((option) => <option key={option} value={option}>{option}</option>)}
+                    </select>
+                  </label>
+                </>
+              )}
               <Field label="Nom" value={customer.name} onChange={(v) => setCustomer({ ...customer, name: v })} />
               <Field label="Email" type="email" value={customer.email} onChange={(v) => setCustomer({ ...customer, email: v })} />
               <Field label="Téléphone" value={customer.phone} onChange={(v) => setCustomer({ ...customer, phone: v })} />

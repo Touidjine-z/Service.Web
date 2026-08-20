@@ -52,7 +52,14 @@ await leak('builder')
 // realisation »), mais aucun MONTANT ne doit apparaitre avant la revelation.
 step('page finale')
 await go('/creer/final')
-const before = await page.evaluate(() => /\d+\s*€/.test(document.body.innerText))
+const before = await page.evaluate(() => {
+  // La maquette du client (.site-root) est ignoree : les montants qu'elle
+  // affiche sont les prix du client sur son propre site, legitimes partout
+  // (§56). On ne traque que les montants de la plateforme.
+  const clone = document.body.cloneNode(true)
+  clone.querySelectorAll('.site-root').forEach((node) => node.remove())
+  return /\d+\s*€/.test(clone.textContent)
+})
 if (before) errors.push('page finale : un montant est visible AVANT la revelation')
 await shot('10-final-avant')
 
@@ -66,8 +73,12 @@ await shot('11-final-prix')
 
 // Montants coherents avec la regle d'acompte (§31)
 const amounts = await page.evaluate(() => {
+  // Les montants sont lus dans la colonne de droite uniquement : la maquette du
+  // client, rendue a cote, contient du texte libre qui pourrait porter les
+  // memes libelles.
+  const scope = [...document.querySelectorAll('aside')].pop() ?? document
   const grab = (label) => {
-    const row = [...document.querySelectorAll('div')].find((d) => d.children.length === 2 && d.children[0].textContent.trim() === label)
+    const row = [...scope.querySelectorAll('div')].find((d) => d.children.length === 2 && d.children[0].textContent.trim() === label)
     return row ? Number(row.children[1].textContent.replace(/[^\d]/g, '')) : null
   }
   return { total: grab('Réalisation'), deposit: grab('Acompte pour démarrer'), balance: grab('Solde restant') }
@@ -89,10 +100,44 @@ await type('Téléphone', '0612345678')
 await click('Enregistrer mon projet')
 await new Promise(r => setTimeout(r, 800))
 
+// Nom de domaine (§59) : l'etape s'intercale entre la demande et l'acompte.
+step('nom de domaine')
+const onDomain = await page.evaluate(() => location.hash.includes('/creer/domaine'))
+if (!onDomain) errors.push(`domaine : pas de redirection (hash=${await page.evaluate(() => location.hash)})`)
+await new Promise(r => setTimeout(r, 900))
+const domainText = await page.evaluate(() => document.body.innerText)
+if (!/Votre nom de domaine/.test(domainText)) errors.push('domaine : la page ne s\'affiche pas')
+// Aucune cle GoDaddy en test : le mode simule doit etre annonce, comme pour Stripe.
+if (!/Vérification simulée/.test(domainText)) errors.push('domaine : le mode simule n\'est pas annonce a l\'ecran')
+const proposed = await page.evaluate(() => [...document.querySelectorAll('button')].filter((b) => b.textContent.trim() === 'Choisir').length)
+if (!proposed) errors.push('domaine : aucune extension disponible proposee')
+await shot('13-domaine')
+
+await click('Choisir')
+await new Promise(r => setTimeout(r, 400))
+const picked = await page.evaluate(() => {
+  const scope = [...document.querySelectorAll('aside')].pop() ?? document
+  const row = [...scope.querySelectorAll('div')].find((d) => d.children.length === 2 && d.children[0].textContent.trim() === 'Réalisation')
+  return {
+    name: (scope.innerText.match(/[a-z0-9-]+\.[a-z]{2,}/) ?? [null])[0],
+    total: row ? Number(row.children[1].textContent.replace(/[^\d]/g, '')) : null,
+  }
+})
+if (!picked.name) errors.push('domaine : le choix n\'apparait pas dans le recapitulatif')
+// Le domaine ajoute une ligne au devis : notre travail de reservation, pas le
+// prix du registrar, qui reste chez lui et dans sa devise.
+if (picked.total !== amounts.total + 30) errors.push(`domaine : total ${picked.total} au lieu de ${amounts.total + 30} apres ajout du domaine`)
+await shot('14-domaine-choisi')
+
+await click('Continuer vers')
+await new Promise(r => setTimeout(r, 500))
+
 // Checkout
 const onCheckout = await page.evaluate(() => location.hash.includes('/paiement'))
 if (!onCheckout) errors.push(`checkout : pas de redirection (hash=${await page.evaluate(() => location.hash)})`)
-await shot('13-checkout')
+const checkoutText = await page.evaluate(() => document.body.innerText)
+if (picked.name && !checkoutText.includes(picked.name)) errors.push('checkout : le nom de domaine retenu n\'est pas rappele')
+await shot('15-checkout')
 step('checkout')
 await type('Titulaire de la carte', 'Marc Durand')
 await type('Numéro de carte', '4242424242424242')
@@ -107,19 +152,27 @@ if (!onConfirm) errors.push('paiement : pas de redirection vers la confirmation'
 const confirmText = await page.evaluate(() => document.body.innerText)
 if (!/Acompte payé/.test(confirmText)) errors.push('confirmation : statut « Acompte payé » absent')
 if (!/SIM-/.test(confirmText)) errors.push('confirmation : reference de transaction absente')
-await shot('14-confirmation')
+if (picked.name && !confirmText.includes(picked.name)) errors.push('confirmation : le nom de domaine reserve n\'est pas rappele')
+await shot('16-confirmation')
 
-// Persistance : le paiement et le lead sont en base
+// Persistance : le paiement, le lead et le domaine sont en base
 const stored = await page.evaluate(async () => {
   const open = () => new Promise((res, rej) => { const r = indexedDB.open('service-web'); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error) })
   const db = await open()
   const all = (name) => new Promise((res) => { const t = db.transaction(name).objectStore(name).getAll(); t.onsuccess = () => res(t.result) })
-  return { payments: await all('payments'), leads: await all('leads'), projects: (await all('projects')).map((p) => p.data.status) }
+  const projects = await all('projects')
+  return {
+    payments: await all('payments'),
+    leads: await all('leads'),
+    projects: projects.map((p) => p.data.status),
+    domains: projects.map((p) => p.data.domain).filter(Boolean),
+  }
 })
 if (!stored.payments.some((p) => p.status === 'paid')) errors.push('base : aucun paiement « paid » enregistre')
 if (!stored.leads.length) errors.push('base : aucun lead enregistre')
 if (!stored.projects.includes('deposit-paid')) errors.push(`base : statut projet = ${stored.projects.join(',')} au lieu de deposit-paid`)
+if (!stored.domains.some((d) => d.status === 'wanted' && d.name)) errors.push('base : le nom de domaine choisi n\'est pas enregistre')
 
 await b.close()
 if (errors.length) { console.log('ECHECS :'); errors.forEach((e) => console.log(' -', e)); process.exit(1) }
-console.log('OK — conversion complete : revelation, lead, acompte, paiement, confirmation, persistance')
+console.log('OK — conversion complete : revelation, lead, nom de domaine, acompte, paiement, confirmation, persistance')

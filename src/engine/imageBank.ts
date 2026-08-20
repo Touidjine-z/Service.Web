@@ -33,7 +33,7 @@ export const BANK_CATEGORIES: BankCategory[] = [
   { id: 'wood', label: 'Bois', palette: ['#8A5A34', '#C89B6A', '#3A2618'], subjects: ['Atelier', 'Plan de travail', 'Copeaux', 'Parquet', 'Meuble sur mesure', 'Établi'] },
   { id: 'health', label: 'Santé', palette: ['#1F7A6C', '#7FD1C1', '#0E2E2A'], subjects: ['Cabinet', 'Consultation', 'Matériel', 'Salle d\'attente', 'Soin', 'Bien-être'] },
   { id: 'beauty', label: 'Beauté', palette: ['#7C3F58', '#D9A5B5', '#2B1A22'], subjects: ['Salon', 'Coiffure', 'Soin du visage', 'Manucure', 'Produits', 'Fauteuil'] },
-  { id: 'automotive', label: 'Automobile', palette: ['#2B2F36', '#C8102E', '#6B7280'], subjects: ['Garage', 'Moteur', 'Carrosserie', 'Pneus', 'Diagnostic', 'Véhicule'] },
+  { id: 'automotive', label: 'Automobile', palette: ['#2B2F36', '#C8102E', '#6B7280'], subjects: ['Garage', 'Moteur', 'Carrosserie', 'Pneus', 'Diagnostic', 'Véhicule', 'Peinture', 'Atelier', 'Pare-brise', 'Salle de cours'] },
   { id: 'real-estate', label: 'Immobilier', palette: ['#33415C', '#A8B8D8', '#1A2233'], subjects: ['Façade', 'Séjour', 'Cuisine', 'Jardin', 'Clés', 'Immeuble'] },
   { id: 'technology', label: 'Technologie', palette: ['#1B2A4A', '#22D3EE', '#0B0F17'], subjects: ['Écrans', 'Réseau', 'Data', 'Développement', 'Support', 'Innovation'] },
   { id: 'lifestyle', label: 'Lifestyle', palette: ['#3F6B4A', '#C7D9B7', '#1E2B21'], subjects: ['Nature', 'Sport', 'Voyage', 'Détente', 'Famille', 'Quotidien'] },

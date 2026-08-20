@@ -1,7 +1,7 @@
 import type { ThemeId, ColorScheme } from './types'
 
 /**
- * Les 20 themes (§10). Un theme n'est pas qu'une palette : il change la
+ * Les 32 themes (§10). Un theme n'est pas qu'une palette : il change la
  * structure, la navigation, la typographie, les boutons, les cartes, le hero,
  * le footer, les espacements, les animations et le traitement des images.
  * Le renderer lit ces tokens ; aucun theme n'a de composant dedie.
@@ -9,11 +9,19 @@ import type { ThemeId, ColorScheme } from './types'
 
 export type NavLayout = 'inline' | 'centered' | 'split' | 'stacked' | 'sidebar' | 'minimal'
 export type HeroLayout = 'centered' | 'split' | 'fullbleed' | 'overlay' | 'boxed' | 'editorial' | 'stacked'
-export type CardStyle = 'flat' | 'outlined' | 'elevated' | 'glass' | 'bordered-heavy' | 'overlap'
-export type ButtonStyle = 'solid' | 'pill' | 'outline' | 'sharp' | 'underline' | 'gradient'
-export type ImageTreatment = 'rounded' | 'sharp' | 'circle' | 'arch' | 'duotone' | 'framed'
+export type CardStyle = 'flat' | 'outlined' | 'elevated' | 'glass' | 'bordered-heavy' | 'overlap' | 'ribbon' | 'inset' | 'stamp'
+export type ButtonStyle = 'solid' | 'pill' | 'outline' | 'sharp' | 'underline' | 'gradient' | 'soft' | 'block'
+export type ImageTreatment = 'rounded' | 'sharp' | 'circle' | 'arch' | 'duotone' | 'framed' | 'leaf'
 export type FooterLayout = 'columns' | 'compact' | 'centered' | 'large'
 export type Motion = 'none' | 'subtle' | 'lively'
+
+/**
+ * Separation entre deux sections. C'etait l'angle mort du systeme : le fond
+ * d'une section est choisi par le client (`tone`), donc le theme n'avait aucune
+ * prise sur le rythme vertical de la page. Facultatif, pour ne pas avoir a
+ * modifier les vingt themes d'origine.
+ */
+export type SectionEdge = 'none' | 'rule' | 'accent' | 'fade' | 'wedge'
 
 export interface Theme {
   id: ThemeId
@@ -36,6 +44,8 @@ export interface Theme {
   sectionPadding: 'compact' | 'normal' | 'airy' | 'vast'
   containerWidth: 'narrow' | 'normal' | 'wide' | 'full'
   motion: Motion
+  /** Separation haute des sections. Absent = aucune. */
+  sectionEdge?: SectionEdge
   /** Rendu sombre par defaut : influence les contrastes calcules. */
   dark?: boolean
 }
@@ -45,6 +55,15 @@ const SANS = "'Inter', system-ui, sans-serif"
 const GROTESK = "'Space Grotesk', 'Inter', sans-serif"
 const MONO = "'IBM Plex Mono', ui-monospace, monospace"
 const SLAB = "'Roboto Slab', Georgia, serif"
+// Familles ajoutees avec les douze themes de 2026-08 (cf. engine/fonts.ts pour
+// les appairages proposes au client, et styles/index.css pour le chargement).
+const OUTFIT = "'Outfit', 'Inter', system-ui, sans-serif"
+const OSWALD = "'Oswald', 'Arial Narrow', 'Helvetica Neue', sans-serif"
+const FRAUNCES = "'Fraunces', 'Playfair Display', Georgia, serif"
+const LORA = "'Lora', Georgia, 'Times New Roman', serif"
+/** Dessinee par le Braille Institute pour la basse vision : I, l, 1 et O, 0 ne
+ *  se ressemblent pas. C'est le parti pris du theme « Civic ». */
+const HYPER = "'Atkinson Hyperlegible', 'Inter', system-ui, sans-serif"
 
 export const THEMES: Theme[] = [
   {
@@ -178,7 +197,91 @@ export const THEMES: Theme[] = [
     colors: { primary: '#06B6D4', secondary: '#1E1B4B', accent: '#F59E0B', background: '#FFFFFF', text: '#1E1B4B', button: '#06B6D4', card: '#ECFEFF', header: '#FFFFFF', footer: '#1E1B4B' },
     headingFont: GROTESK, bodyFont: SANS, headingWeight: 800, headingTransform: 'none', letterSpacing: 'tight',
     nav: 'sidebar', hero: 'split', card: 'elevated', button: 'gradient', image: 'rounded', footer: 'large',
-    radius: 16, sectionPadding: 'normal', containerWidth: 'wide', motion: 'lively',
+    radius: 16, sectionPadding: 'normal', containerWidth: 'wide', sectionEdge: 'wedge', motion: 'lively',
+  },
+  {
+    id: 'cabinet', name: 'Cabinet', tagline: 'Clair, apaisant, rassurant',
+    colors: { primary: '#0F766E', secondary: '#134E4A', accent: '#6FC7B8', background: '#F4FAF8', text: '#12312D', button: '#0F766E', card: '#FFFFFF', header: '#FFFFFF', footer: '#103F3A' },
+    headingFont: OUTFIT, bodyFont: SANS, headingWeight: 600, headingTransform: 'none', letterSpacing: 'normal',
+    nav: 'centered', hero: 'split', card: 'outlined', button: 'soft', image: 'rounded', footer: 'compact',
+    radius: 22, sectionPadding: 'airy', containerWidth: 'normal', motion: 'subtle',
+  },
+  {
+    id: 'serene', name: 'Serene', tagline: 'Douceur, lenteur, grands blancs',
+    colors: { primary: '#5F5280', secondary: '#3E3652', accent: '#C4B0D6', background: '#F9F6F3', text: '#332C3D', button: '#5F5280', card: '#FFFFFF', header: '#F9F6F3', footer: '#3E3652' },
+    headingFont: SANS, bodyFont: SANS, headingWeight: 400, headingTransform: 'none', letterSpacing: 'wide',
+    nav: 'stacked', hero: 'centered', card: 'elevated', button: 'pill', image: 'arch', footer: 'centered',
+    radius: 28, sectionPadding: 'vast', containerWidth: 'narrow', sectionEdge: 'fade', motion: 'subtle',
+  },
+  {
+    id: 'tribune', name: 'Tribune', tagline: 'Robe noire, papier ivoire',
+    colors: { primary: '#6B2733', secondary: '#2A2E35', accent: '#9E4A58', background: '#FBF9F5', text: '#1F2126', button: '#6B2733', card: '#FFFFFF', header: '#FBF9F5', footer: '#2A2E35' },
+    headingFont: LORA, bodyFont: SANS, headingWeight: 600, headingTransform: 'none', letterSpacing: 'normal',
+    nav: 'split', hero: 'editorial', card: 'flat', button: 'sharp', image: 'framed', footer: 'columns',
+    radius: 4, sectionPadding: 'airy', containerWidth: 'narrow', sectionEdge: 'rule', motion: 'none',
+  },
+  {
+    id: 'brief', name: 'Brief', tagline: 'Grille, chiffres, aucun effet',
+    colors: { primary: '#4F5F33', secondary: '#23262B', accent: '#9FB06B', background: '#F3F4EF', text: '#23262B', button: '#4F5F33', card: '#FFFFFF', header: '#F3F4EF', footer: '#23262B' },
+    headingFont: MONO, bodyFont: SANS, headingWeight: 500, headingTransform: 'uppercase', letterSpacing: 'wide',
+    nav: 'inline', hero: 'boxed', card: 'inset', button: 'underline', image: 'sharp', footer: 'compact',
+    radius: 0, sectionPadding: 'normal', containerWidth: 'wide', sectionEdge: 'rule', motion: 'subtle',
+  },
+  {
+    id: 'estate', name: 'Estate', tagline: 'Pierre, verre et nuit',
+    colors: { primary: '#CFC6B6', secondary: '#2A2E33', accent: '#8A9A93', background: '#16181B', text: '#ECE8E1', button: '#CFC6B6', card: '#1E2126', header: '#16181B', footer: '#101214' },
+    headingFont: SANS, bodyFont: SANS, headingWeight: 500, headingTransform: 'uppercase', letterSpacing: 'wide',
+    nav: 'minimal', hero: 'boxed', card: 'flat', button: 'sharp', image: 'sharp', footer: 'columns',
+    radius: 0, sectionPadding: 'compact', containerWidth: 'full', sectionEdge: 'fade', motion: 'none', dark: true,
+  },
+  {
+    id: 'civic', name: 'Civic', tagline: 'Chaleureux, lisible par tous',
+    colors: { primary: '#9A5B12', secondary: '#1D3557', accent: '#F0B429', background: '#FFFFFF', text: '#1A1D21', button: '#9A5B12', card: '#FFF8EF', header: '#FFFFFF', footer: '#1D3557' },
+    headingFont: HYPER, bodyFont: HYPER, headingWeight: 700, headingTransform: 'none', letterSpacing: 'normal',
+    nav: 'centered', hero: 'stacked', card: 'bordered-heavy', button: 'solid', image: 'framed', footer: 'columns',
+    radius: 8, sectionPadding: 'airy', containerWidth: 'normal', motion: 'subtle',
+  },
+  {
+    id: 'atelier', name: 'Atelier', tagline: 'Plan d\'atelier, trait épais',
+    colors: { primary: '#F2B705', secondary: '#8A9AA6', accent: '#FF6B35', background: '#14181C', text: '#E6ECF0', button: '#F2B705', card: '#1E242A', header: '#14181C', footer: '#0B0E11' },
+    headingFont: MONO, bodyFont: SANS, headingWeight: 500, headingTransform: 'uppercase', letterSpacing: 'wide',
+    nav: 'minimal', hero: 'editorial', card: 'bordered-heavy', button: 'block', image: 'sharp', footer: 'compact',
+    radius: 0, sectionPadding: 'compact', containerWidth: 'narrow', sectionEdge: 'rule', motion: 'none', dark: true,
+  },
+  {
+    id: 'marche', name: 'Marché', tagline: 'Kraft, rondeurs, étal généreux',
+    colors: { primary: '#57661C', secondary: '#8A5A2B', accent: '#D9603A', background: '#F3EAD8', text: '#2A2318', button: '#57661C', card: '#FCF7EC', header: '#F3EAD8', footer: '#2A2318' },
+    headingFont: SLAB, bodyFont: SANS, headingWeight: 700, headingTransform: 'uppercase', letterSpacing: 'wide',
+    nav: 'inline', hero: 'boxed', card: 'ribbon', button: 'pill', image: 'circle', footer: 'centered',
+    radius: 28, sectionPadding: 'airy', containerWidth: 'normal', motion: 'subtle',
+  },
+  {
+    id: 'neon', name: 'Néon', tagline: 'Nuit fluo, enseigne allumée',
+    colors: { primary: '#FF2D87', secondary: '#8B5CF6', accent: '#3DF5C5', background: '#08070F', text: '#F4F0FF', button: '#FF2D87', card: '#171226', header: '#08070F', footer: '#05040B' },
+    headingFont: GROTESK, bodyFont: SANS, headingWeight: 700, headingTransform: 'uppercase', letterSpacing: 'wide',
+    nav: 'split', hero: 'overlay', card: 'glass', button: 'pill', image: 'framed', footer: 'large',
+    radius: 22, sectionPadding: 'normal', containerWidth: 'wide', sectionEdge: 'accent', motion: 'lively', dark: true,
+  },
+  {
+    id: 'studio', name: 'Studio', tagline: 'Mur gris, tirages plein cadre',
+    colors: { primary: '#16181C', secondary: '#54585E', accent: '#E2543B', background: '#DAD8D3', text: '#16181C', button: '#E2543B', card: '#FFFFFF', header: '#DAD8D3', footer: '#16181C' },
+    headingFont: GROTESK, bodyFont: SANS, headingWeight: 400, headingTransform: 'none', letterSpacing: 'tight',
+    nav: 'stacked', hero: 'split', card: 'overlap', button: 'sharp', image: 'duotone', footer: 'compact',
+    radius: 0, sectionPadding: 'vast', containerWidth: 'full', motion: 'subtle',
+  },
+  {
+    id: 'affiche', name: 'Affiche', tagline: 'Sérigraphie, aplats, typo condensée',
+    colors: { primary: '#076A48', secondary: '#123B2E', accent: '#FFD400', background: '#F7F4EA', text: '#101418', button: '#076A48', card: '#FFE566', header: '#F7F4EA', footer: '#101418' },
+    headingFont: OSWALD, bodyFont: GROTESK, headingWeight: 700, headingTransform: 'uppercase', letterSpacing: 'tight',
+    nav: 'centered', hero: 'stacked', card: 'flat', button: 'solid', image: 'arch', footer: 'columns',
+    radius: 0, sectionPadding: 'normal', containerWidth: 'normal', sectionEdge: 'wedge', motion: 'lively',
+  },
+  {
+    id: 'vitrine', name: 'Vitrine', tagline: 'Contours francs, produit en avant',
+    colors: { primary: '#4A2C1D', secondary: '#8A6A55', accent: '#C6F24E', background: '#FFFFFF', text: '#1B1512', button: '#4A2C1D', card: '#FAF7F2', header: '#FFFFFF', footer: '#1B1512' },
+    headingFont: FRAUNCES, bodyFont: SANS, headingWeight: 700, headingTransform: 'none', letterSpacing: 'tight',
+    nav: 'sidebar', hero: 'fullbleed', card: 'stamp', button: 'pill', image: 'leaf', footer: 'large',
+    radius: 26, sectionPadding: 'airy', containerWidth: 'normal', motion: 'lively',
   },
   {
     id: 'custom', name: 'Custom', tagline: 'Base neutre à personnaliser entièrement',

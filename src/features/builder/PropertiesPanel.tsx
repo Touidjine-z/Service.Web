@@ -1,16 +1,24 @@
-import { useState } from 'react'
-import { Eye, EyeOff, Image as ImageIcon, Sparkles, Trash2 } from 'lucide-react'
-import type { Page, Section } from '@/engine/types'
-import { SECTION_DEFS, resolveProps, type FieldDef } from '@/renderer/sectionDefs'
+import { Copy, Eye, EyeOff, Trash2 } from 'lucide-react'
+import type { Page, Section, Viewport } from '@/engine/types'
+import { SECTION_DEFS, resolveProps } from '@/renderer/sectionDefs'
 import { useProject } from '@/store/ProjectStore'
-import MediaPicker from './MediaPicker'
-import { analyzeLocally, improveText, makeFaq } from '@/engine/assistant'
+import FieldControl from './FieldControl'
+import BlocksEditor from './BlocksEditor'
+import { analyzeLocally, makeFaq } from '@/engine/assistant'
 
 /**
  * Panneau de droite (§9). Il est entierement genere a partir du catalogue de
  * sections : ajouter une section ne demande aucun formulaire supplementaire.
  */
-export default function PropertiesPanel({ page, section }: { page: Page; section: Section | null }) {
+export default function PropertiesPanel({ page, section, viewport, selectedBlockId, onSelectBlock }: {
+  page: Page
+  section: Section | null
+  /** Apercu courant : la grille fluide n'edite pas le meme point de rupture
+   *  selon qu'on regarde l'ordinateur ou le mobile (§14). */
+  viewport: Viewport
+  selectedBlockId: string | null
+  onSelectBlock: (blockId: string | null) => void
+}) {
   const { project, dispatch } = useProject()
 
   if (!section) {
@@ -73,6 +81,14 @@ export default function PropertiesPanel({ page, section }: { page: Page; section
           </button>
           <button
             type="button"
+            className="rounded-lg p-2 text-muted hover:bg-canvas hover:text-ink"
+            title="Dupliquer"
+            onClick={() => dispatch({ type: 'duplicateSection', pageId: page.id, sectionId: section.id })}
+          >
+            <Copy size={16} />
+          </button>
+          <button
+            type="button"
             className="rounded-lg p-2 text-muted hover:bg-red-50 hover:text-red-600"
             title="Supprimer"
             onClick={() => dispatch({ type: 'removeSection', pageId: page.id, sectionId: section.id })}
@@ -101,169 +117,17 @@ export default function PropertiesPanel({ page, section }: { page: Page; section
           />
         ))}
       </div>
-    </div>
-  )
-}
 
-function ImageField({ label, value, onChange }: { label: string; value: string; onChange: (v: unknown) => void }) {
-  const [picking, setPicking] = useState(false)
-  return (
-    <div>
-      <p className="mb-1 text-xs font-medium text-muted">{label}</p>
-      {value && <img src={value} alt="" className="mb-2 aspect-[3/2] w-full rounded-lg border border-line object-cover" />}
-      <div className="flex gap-2">
-        <button type="button" className="btn-secondary flex-1 !py-1.5 text-xs" onClick={() => setPicking(true)}>
-          <ImageIcon size={13} /> {value ? 'Changer' : 'Choisir'}
-        </button>
-        {value && (
-          <button type="button" className="rounded-lg px-2 text-subtle hover:text-red-600" onClick={() => onChange('')}>
-            <Trash2 size={13} />
-          </button>
-        )}
-      </div>
-      {picking && <MediaPicker onClose={() => setPicking(false)} onPick={(url) => onChange(url)} />}
-    </div>
-  )
-}
-
-function FieldControl({ field, value, onChange, onGenerate }: {
-  field: FieldDef
-  value: unknown
-  onChange: (v: unknown) => void
-  /** Proposition automatique, quand le champ s'y prete (§39). */
-  onGenerate?: () => void
-}) {
-  if (field.type === 'boolean') {
-    return (
-      <label className="flex items-center justify-between gap-3 text-xs font-medium text-muted">
-        {field.label}
-        <button
-          type="button"
-          role="switch"
-          aria-checked={value !== false}
-          onClick={() => onChange(value === false)}
-          className={`h-5 w-9 shrink-0 rounded-full transition ${value !== false ? 'bg-brand' : 'bg-line'}`}
-        >
-          <span className={`block h-4 w-4 rounded-full bg-white transition ${value !== false ? 'translate-x-[18px]' : 'translate-x-0.5'}`} />
-        </button>
-      </label>
-    )
-  }
-
-  if (field.type === 'select') {
-    return (
-      <label className="block text-xs font-medium text-muted">
-        {field.label}
-        <select className="field mt-1" value={String(value ?? '')} onChange={(e) => onChange(e.target.value)}>
-          {field.options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-        </select>
-      </label>
-    )
-  }
-
-  if (field.type === 'number') {
-    return (
-      <label className="block text-xs font-medium text-muted">
-        {field.label}
-        <input
-          type="number"
-          className="field mt-1"
-          min={field.min}
-          max={field.max}
-          value={Number(value ?? field.min)}
-          onChange={(e) => onChange(Math.min(field.max, Math.max(field.min, Number(e.target.value) || field.min)))}
-        />
-      </label>
-    )
-  }
-
-  if (field.type === 'image') {
-    return <ImageField label={field.label} value={value ? String(value) : ''} onChange={onChange} />
-  }
-
-  if (field.type === 'list') {
-    const items = Array.isArray(value) ? (value as Record<string, unknown>[]) : []
-    return (
-      <div>
-        <div className="flex items-center justify-between">
-          <p className="label">{field.label}</p>
-          {onGenerate && (
-            <button type="button" className="mb-1.5 flex items-center gap-1 text-[11px] font-semibold text-brand hover:underline" onClick={onGenerate}>
-              <Sparkles size={11} /> Proposer
-            </button>
-          )}
-        </div>
-        <div className="space-y-3">
-          {items.map((item, index) => (
-            <div key={index} className="rounded-xl border border-line bg-canvas p-3">
-              <div className="mb-2 flex items-center justify-between">
-                <span className="text-[11px] font-semibold uppercase tracking-wide text-subtle">
-                  {field.itemLabel} {index + 1}
-                </span>
-                <button
-                  type="button"
-                  className="text-subtle hover:text-red-600"
-                  onClick={() => onChange(items.filter((_, i) => i !== index))}
-                >
-                  <Trash2 size={13} />
-                </button>
-              </div>
-              <div className="space-y-2">
-                {field.itemFields.map((sub) => (
-                  <input
-                    key={sub.key}
-                    className="field !py-2 text-xs"
-                    placeholder={sub.label}
-                    value={String(item[sub.key] ?? '')}
-                    onChange={(e) =>
-                      onChange(items.map((it, i) => (i === index ? { ...it, [sub.key]: e.target.value } : it)))
-                    }
-                  />
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-        <button
-          type="button"
-          className="mt-2 text-xs font-semibold text-brand hover:underline"
-          onClick={() => onChange([...items, Object.fromEntries(field.itemFields.map((f) => [f.key, '']))])}
-        >
-          + Ajouter
-        </button>
-      </div>
-    )
-  }
-
-  return (
-    <label className="block text-xs font-medium text-muted">
-      {field.label}
-      {field.type === 'textarea' ? (
-        <>
-          <textarea
-            className="field mt-1 min-h-[92px]"
-            value={String(value ?? '')}
-            placeholder={field.placeholder}
-            onChange={(e) => onChange(e.target.value)}
-          />
-          {String(value ?? '').trim().length > 10 && (
-            <button
-              type="button"
-              className="mt-1 flex items-center gap-1 text-[11px] font-semibold text-brand hover:underline"
-              onClick={() => onChange(improveText(String(value ?? '')))}
-            >
-              <Sparkles size={11} /> Améliorer ce texte
-            </button>
-          )}
-        </>
-      ) : (
-        <input
-          className="field mt-1"
-          value={String(value ?? '')}
-          placeholder={field.placeholder}
-          onChange={(e) => onChange(e.target.value)}
+      {def.blocks && def.blocks.length > 0 && (
+        <BlocksEditor
+          page={page}
+          section={section}
+          def={def}
+          viewport={viewport}
+          selectedBlockId={selectedBlockId}
+          onSelectBlock={onSelectBlock}
         />
       )}
-    </label>
+    </div>
   )
 }

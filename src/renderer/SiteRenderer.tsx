@@ -5,6 +5,7 @@ import { withAlpha } from '@/engine/color'
 import { createTokens, siteCssVars } from './tokens'
 import SectionView from './Sections'
 import { sectionLabel } from './sectionDefs'
+import { Appear, MotionProvider } from './Motion'
 
 /**
  * Rend le site du client. Le meme composant sert a l'edition, a l'apercu et au
@@ -22,6 +23,12 @@ interface Props {
   onNavigate?: (slug: string) => void
   /** Actif en mode visiteur quand le site accepte les commandes. */
   onAddToCart?: (product: Product) => void
+  /**
+   * Animations d'entree des sections. Par defaut elles suivent le mode :
+   * actives pour le visiteur, coupees en edition. Une vignette figee (vitrine,
+   * page finale) peut les couper explicitement.
+   */
+  animate?: boolean
 }
 
 function Nav({ project, tokens, onNavigate, current }: {
@@ -103,6 +110,84 @@ function Nav({ project, tokens, onNavigate, current }: {
   )
 }
 
+/**
+ * Rail lateral (`nav: 'sidebar'`).
+ *
+ * La variante etait declaree depuis l'origine mais tombait dans le meme
+ * `space-between` que `inline` et `split` : trois valeurs, un seul rendu. Elle
+ * produit desormais une vraie colonne, et bascule en en-tete classique des que
+ * l'ecran n'est plus assez large.
+ */
+function Rail({ project, tokens, onNavigate, current }: {
+  project: Project
+  tokens: ReturnType<typeof createTokens>
+  onNavigate?: (slug: string) => void
+  current: string
+}) {
+  const { colors } = tokens
+  const name = project.identity.businessName.trim() || 'Votre entreprise'
+
+  return (
+    <aside
+      style={{
+        width: `${tokens.scale(248)}px`,
+        flexShrink: 0,
+        background: colors.header,
+        borderRight: `1px solid ${tokens.divider}`,
+        padding: `${tokens.scale(28)}px ${tokens.scale(24)}px`,
+        position: 'sticky',
+        top: 0,
+        alignSelf: 'flex-start',
+      }}
+    >
+      <span style={{ ...tokens.heading(21), color: colors.primary, display: 'block' }}>
+        {project.identity.logoUrl
+          ? <img src={project.identity.logoUrl} alt={name} style={{ height: `${tokens.scale(38)}px`, display: 'block' }} />
+          : name}
+      </span>
+
+      {project.identity.tagline && (
+        <p style={{ marginTop: `${tokens.scale(10)}px`, fontSize: `${tokens.scale(13)}px`, lineHeight: 1.6, color: 'currentColor', opacity: 0.68 }}>
+          {project.identity.tagline}
+        </p>
+      )}
+
+      <nav style={{ display: 'grid', gap: `${tokens.scale(4)}px`, marginTop: `${tokens.scale(26)}px` }}>
+        {project.pages.map((p) => {
+          const active = p.slug === current
+          return (
+            <button
+              key={p.slug}
+              type="button"
+              onClick={() => onNavigate?.(p.slug)}
+              style={{
+                background: 'none', border: 'none', textAlign: 'left', fontFamily: 'inherit',
+                padding: `${tokens.scale(7)}px 0`,
+                cursor: onNavigate ? 'pointer' : 'default',
+                fontSize: `${tokens.scale(15)}px`,
+                fontWeight: active ? 700 : 500,
+                color: active ? colors.primary : 'currentColor',
+                opacity: active ? 1 : 0.68,
+                borderLeft: `2px solid ${active ? colors.primary : 'transparent'}`,
+                paddingLeft: `${tokens.scale(12)}px`,
+              }}
+            >
+              {p.name}
+            </button>
+          )
+        })}
+      </nav>
+
+      {(project.identity.phone || project.identity.email) && (
+        <div style={{ marginTop: `${tokens.scale(28)}px`, paddingTop: `${tokens.scale(16)}px`, borderTop: `1px solid ${tokens.divider}`, fontSize: `${tokens.scale(13)}px`, lineHeight: 1.9, color: 'currentColor', opacity: 0.68 }}>
+          {project.identity.phone && <p>{project.identity.phone}</p>}
+          {project.identity.email && <p>{project.identity.email}</p>}
+        </div>
+      )}
+    </aside>
+  )
+}
+
 function Footer({ project, tokens }: { project: Project; tokens: ReturnType<typeof createTokens> }) {
   const { theme, colors } = tokens
   const name = project.identity.businessName.trim() || 'Votre entreprise'
@@ -131,6 +216,25 @@ function Footer({ project, tokens }: { project: Project; tokens: ReturnType<type
             </div>
           </div>
         ) : null}
+        {/* « large » signait le meme rendu que « columns » : il pose desormais
+            l'enseigne en grand, comme une signature de bas de page. */}
+        {theme.footer === 'large' && tokens.viewport !== 'mobile' && (
+          <p
+            style={{
+              ...tokens.heading(tokens.viewport === 'tv' ? 96 : 64),
+              color: tokens.onFooter,
+              opacity: 0.16,
+              lineHeight: 1,
+              marginBottom: `${tokens.scale(20)}px`,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+            aria-hidden
+          >
+            {name}
+          </p>
+        )}
         <p style={{ fontSize: `${tokens.scale(13)}px`, opacity: 0.7, textAlign: theme.footer === 'centered' ? 'center' : 'left' }}>
           © {year} {name}. Tous droits réservés.
         </p>
@@ -141,14 +245,32 @@ function Footer({ project, tokens }: { project: Project; tokens: ReturnType<type
 
 export default function SiteRenderer({
   project, page, viewport = 'desktop', editable = false, selectedSectionId, onSelectSection, onNavigate, onAddToCart,
+  animate,
 }: Props) {
   const theme = getTheme(project.themeId)
-  const tokens = createTokens(theme, project.colors, viewport)
+  const tokens = createTokens(theme, project.colors, viewport, project.fontPair)
   const visible = page.sections.filter((s) => editable || !s.hidden)
+  // Le rail lateral n'a pas de sens sous 900 px : mobile et tablette
+  // retombent sur l'en-tete horizontale.
+  const railed = theme.nav === 'sidebar' && (viewport === 'desktop' || viewport === 'tv')
 
   return (
-    <div className="site-root" style={siteCssVars(theme, project.colors) as CSSProperties}>
-      <Nav project={project} tokens={tokens} onNavigate={onNavigate} current={page.slug} />
+    // Les animations du site suivent `theme.motion` (§10) et sont coupees en
+    // edition : rien ne doit bouger sous le curseur pendant qu'on compose.
+    <MotionProvider level={theme.motion} enabled={animate ?? !editable}>
+    <div
+      className="site-root"
+      style={{
+        ...(siteCssVars(theme, project.colors, project.fontPair) as CSSProperties),
+        display: railed ? 'flex' : undefined,
+        alignItems: railed ? 'flex-start' : undefined,
+      }}
+    >
+      {railed
+        ? <Rail project={project} tokens={tokens} onNavigate={onNavigate} current={page.slug} />
+        : <Nav project={project} tokens={tokens} onNavigate={onNavigate} current={page.slug} />}
+
+      <div style={railed ? { flex: 1, minWidth: 0 } : { display: 'contents' }}>
 
       <main>
         {visible.length === 0 && (
@@ -172,7 +294,9 @@ export default function SiteRenderer({
                 outlineOffset: '-2px',
               }}
             >
-              <SectionView section={section} project={project} tokens={tokens} onAddToCart={onAddToCart} />
+              <Appear>
+                <SectionView section={section} project={project} tokens={tokens} onAddToCart={onAddToCart} />
+              </Appear>
 
               {editable && (
                 <span
@@ -196,6 +320,8 @@ export default function SiteRenderer({
       </main>
 
       <Footer project={project} tokens={tokens} />
+      </div>
     </div>
+    </MotionProvider>
   )
 }

@@ -67,6 +67,11 @@ export default function PricingRulesPanel({ onSaved }: { onSaved: () => void }) 
             <Count label="Pages incluses" value={rules.includedPages} onChange={(v) => set({ includedPages: v })} />
             <Money label="Page supplémentaire" value={rules.pricePerExtraPage} onChange={(v) => set({ pricePerExtraPage: v })} />
             <Money label="Design sur mesure" value={rules.customThemeSurcharge} onChange={(v) => set({ customThemeSurcharge: v })} />
+            <Money
+              label="Nom de domaine"
+              value={rules.domainSetupFee ?? DEFAULT_PRICING_RULES.domainSetupFee}
+              onChange={(v) => set({ domainSetupFee: v })}
+            />
           </div>
         </section>
 
@@ -200,6 +205,7 @@ function diff(before: PricingRules, after: PricingRules): Omit<PricingChange, 'i
   push('Pages incluses', before.includedPages, after.includedPages)
   push('Page supplémentaire', before.pricePerExtraPage, after.pricePerExtraPage)
   push('Design sur mesure', before.customThemeSurcharge, after.customThemeSurcharge)
+  push('Nom de domaine', before.domainSetupFee ?? 0, after.domainSetupFee ?? 0)
   push('Taux d\'acompte (%)', Math.round(before.depositRate * 100), Math.round(after.depositRate * 100))
   push('Acompte minimum', before.depositMinimum, after.depositMinimum)
 

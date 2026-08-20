@@ -3,6 +3,7 @@ import { HashRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { ProjectProvider } from '@/store/ProjectStore'
 import LandingPage from '@/features/landing/LandingPage'
 import ActivityStep from '@/features/onboarding/ActivityStep'
+import ExpressStep from '@/features/onboarding/ExpressStep'
 import ObjectivesStep from '@/features/onboarding/ObjectivesStep'
 import FeaturesStep from '@/features/onboarding/FeaturesStep'
 import ThemeStep from '@/features/onboarding/ThemeStep'
@@ -10,6 +11,7 @@ import ColorsStep from '@/features/onboarding/ColorsStep'
 import BuilderPage from '@/features/builder/BuilderPage'
 import VisitorPage from '@/features/preview/VisitorPage'
 import FinalPage from '@/features/final/FinalPage'
+import DomainPage from '@/features/final/DomainPage'
 import CheckoutPage from '@/features/final/CheckoutPage'
 import ConfirmationPage from '@/features/final/ConfirmationPage'
 
@@ -29,6 +31,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/creer/activite" element={<ActivityStep />} />
+          <Route path="/creer/express" element={<ExpressStep />} />
           <Route path="/creer/objectifs" element={<ObjectivesStep />} />
           <Route path="/creer/fonctionnalites" element={<FeaturesStep />} />
           <Route path="/creer/theme" element={<ThemeStep />} />
@@ -36,6 +39,7 @@ export default function App() {
           <Route path="/creer/site" element={<BuilderPage />} />
           <Route path="/apercu" element={<VisitorPage />} />
           <Route path="/creer/final" element={<FinalPage />} />
+          <Route path="/creer/domaine" element={<DomainPage />} />
           <Route path="/paiement" element={<CheckoutPage />} />
           <Route path="/confirmation" element={<ConfirmationPage />} />
           <Route path="/tv" element={<TvPage />} />

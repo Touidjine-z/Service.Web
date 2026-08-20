@@ -101,6 +101,7 @@ export default function ProjectDetail({ row, onBack, onChanged }: {
               <Info label="Produits" value={String(project.products.length)} />
               <Info label="Services" value={String(project.services.length)} />
               <Info label="Images de galerie" value={String(project.gallery.length)} />
+              <Info label="Nom de domaine" value={domainSummary(project)} />
               <Info label="Affichage TV" value={project.modules.includes('tv') ? 'Demandé' : 'Non'} />
               <Info label="QR Code" value={project.modules.includes('qrcode') ? 'Demandé' : 'Non'} />
             </Grid>
@@ -162,6 +163,11 @@ export default function ProjectDetail({ row, onBack, onChanged }: {
                         <p className="text-xs text-subtle">
                           {order.customer.email}{order.customer.phone ? ` · ${order.customer.phone}` : ''} · {formatDate(order.createdAt)}
                         </p>
+                        {order.service && (
+                          <p className="text-xs font-medium text-brand">
+                            {order.service}{order.slot ? ` · ${order.slot.toLowerCase()}` : ''}
+                          </p>
+                        )}
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-semibold text-ink">
@@ -388,4 +394,13 @@ function PreviewModal({ project, onClose }: { project: Project; onClose: () => v
       </div>
     </div>
   )
+}
+
+/** Ce que l'administrateur doit savoir du domaine avant de le reserver (§59). */
+function domainSummary(project: Project): string {
+  const domain = project.domain
+  if (!domain) return 'Non demandé'
+  if (domain.status === 'later') return 'À choisir plus tard'
+  if (domain.status === 'owned') return `${domain.name} — déjà au client`
+  return `${domain.name} — à réserver`
 }

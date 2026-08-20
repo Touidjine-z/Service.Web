@@ -8,7 +8,7 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "smoke": "node scripts/parcours.mjs && node scripts/conversion.mjs && node scripts/admin.mjs && node scripts/commerce.mjs && node scripts/avance.mjs"
+    "smoke": "node scripts/parcours.mjs && node scripts/conversion.mjs && node scripts/admin.mjs && node scripts/commerce.mjs && node scripts/avance.mjs && node scripts/restauration.mjs && node scripts/express.mjs && node scripts/blocs.mjs && node scripts/automobile.mjs"
   },
   "dependencies": {
     "dexie": "^4.4.5",

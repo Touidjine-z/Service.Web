@@ -42,8 +42,8 @@ const STOP_WORDS = new Set([
 
 /** Mots-cles supplementaires par metier, en plus de son libelle. */
 const HINTS: Record<string, string[]> = {
-  restaurant: ['restaurant', 'cuisine', 'chef', 'brasserie', 'bistrot', 'plats'],
-  snack: ['snack', 'fast', 'burger', 'kebab', 'sandwich'],
+  restaurant: ['restaurant', 'cuisine', 'chef', 'brasserie', 'bistrot', 'plats', 'grill', 'trattoria', 'crêperie', 'creperie'],
+  snack: ['snack', 'fast', 'burger', 'kebab', 'sandwich', 'tacos', 'pizza', 'pizzeria', 'friterie', 'emporter'],
   cafe: ['café', 'cafe', 'salon', 'thé', 'the', 'torréfaction'],
   boulangerie: ['boulangerie', 'boulanger', 'pâtisserie', 'patisserie', 'pain', 'viennoiserie'],
   traiteur: ['traiteur', 'buffet', 'réception', 'reception', 'événement'],
@@ -98,7 +98,13 @@ export function analyzeLocally(sentence: string): Analysis {
   let best: { id: string; score: number } | null = null
 
   for (const activity of ALL_ACTIVITIES) {
-    const words = [...normalize(activity.label).split(/[^a-z0-9]+/), ...(HINTS[activity.id] ?? []).map(normalize)]
+    // Trois sources : le libelle, les mots-cles declares par le metier
+    // (Activity.keywords) et les indices historiques ci-dessus.
+    const words = [
+      ...normalize(activity.label).split(/[^a-z0-9]+/),
+      ...(activity.keywords ?? []).map(normalize),
+      ...(HINTS[activity.id] ?? []).map(normalize),
+    ]
     let score = 0
     for (const word of words) {
       if (word.length < 4 || STOP_WORDS.has(word)) continue
@@ -175,7 +181,11 @@ export function suggestTheme(analysis: Analysis): Project['themeId'] {
     electricien: 'professional', peintre: 'creative', macon: 'corporate', serrurier: 'professional',
     medecin: 'clean', dentiste: 'clean', kine: 'clean', psychologue: 'elegant',
     avocat: 'classic', comptable: 'corporate', consultant: 'modern', coach: 'dynamic',
-    agence: 'dark', photographe: 'minimal', garage: 'urban', immobilier: 'premium',
+    agence: 'dark', photographe: 'minimal', garage: 'atelier', immobilier: 'premium',
+    carrosserie: 'bold', 'centre-auto': 'vitrine', pneus: 'bold',
+    'pare-brise': 'clean', 'controle-technique': 'brief', depannage: 'urban',
+    preparation: 'studio', moto: 'dark', 'vente-auto': 'premium',
+    'formation-auto': 'civic',
     coiffeur: 'luxury', architecte: 'minimal', association: 'fresh',
   }
   const id = analysis.activityId ? byActivity[analysis.activityId] : undefined

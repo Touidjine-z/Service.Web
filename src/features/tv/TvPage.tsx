@@ -4,6 +4,7 @@ import { ArrowLeft, Maximize2 } from 'lucide-react'
 import type { Product, Project } from '@/engine/types'
 import { getTheme } from '@/engine/themes'
 import { readableOn, withAlpha } from '@/engine/color'
+import { PRODUCT_TAG_LABEL } from '@/engine/catalog'
 import { createTokens, siteCssVars, type SiteTokens } from '@/renderer/tokens'
 import { formatPrice } from '@/renderer/samples'
 import { useProject } from '@/store/ProjectStore'
@@ -28,7 +29,7 @@ export default function TvPage() {
   const shellRef = useRef<HTMLDivElement>(null)
 
   const theme = getTheme(project.themeId)
-  const tokens = createTokens(theme, project.colors, 'tv')
+  const tokens = createTokens(theme, project.colors, 'tv', project.fontPair)
 
   function fullscreen() {
     shellRef.current?.requestFullscreen?.().catch(() => undefined)
@@ -99,7 +100,7 @@ function TvScreen({ screenRef, project, tokens, layout }: {
         ref={screenRef}
         className="site-root"
         style={{
-          ...siteCssVars(getThemeOf(project), project.colors),
+          ...siteCssVars(getThemeOf(project), project.colors, project.fontPair),
           width: BASE,
           height: BASE * 9 / 16,
           transform: `scale(${scale})`,
@@ -141,6 +142,44 @@ function visibleProducts(project: Project): Product[] {
   return project.products.filter((p) => !p.hidden)
 }
 
+/**
+ * Pastille d'un produit sur l'ecran : lue de loin, elle ne garde que la
+ * premiere etiquette — nouveaute ou offre en priorite.
+ */
+function TvTag({ project, item, size = 18 }: { project: Project; item: Product; size?: number }) {
+  const tag = item.tags?.find((t) => t === 'new' || t === 'promo') ?? item.tags?.[0]
+  if (!tag) return null
+  return (
+    <span
+      style={{
+        background: project.colors.accent, color: readableOn(project.colors.accent),
+        fontSize: size, fontWeight: 800, letterSpacing: '.06em', textTransform: 'uppercase',
+        padding: `${Math.round(size * 0.35)}px ${Math.round(size * 0.8)}px`, borderRadius: 999,
+        whiteSpace: 'nowrap',
+      }}
+    >
+      {PRODUCT_TAG_LABEL[tag]}
+    </span>
+  )
+}
+
+/** Prix courant et prix barre, a la taille demandee par la mise en page. */
+function TvPrice({ project, item, size }: { project: Project; item: Product; size: number }) {
+  if (!project.showPrices || item.price === null) return null
+  return (
+    <span style={{ display: 'inline-flex', alignItems: 'baseline', gap: Math.round(size * 0.4) }}>
+      <span style={{ fontSize: size, fontWeight: 700, color: project.colors.primary }}>
+        {formatPrice(item.price, project.currency)}
+      </span>
+      {item.oldPrice ? (
+        <span style={{ fontSize: Math.round(size * 0.7), color: withAlpha(project.colors.text, 0.45), textDecoration: 'line-through' }}>
+          {formatPrice(item.oldPrice, project.currency)}
+        </span>
+      ) : null}
+    </span>
+  )
+}
+
 function EmptyBoard({ tokens }: { tokens: SiteTokens }) {
   return (
     <div style={{ display: 'grid', placeItems: 'center', height: '100%', color: tokens.muted, fontSize: 28 }}>
@@ -171,12 +210,12 @@ function MenuBoard({ project, tokens }: { project: Project; tokens: SiteTokens }
               {group.items.slice(0, 8).map((item) => (
                 <li key={item.id} style={{ display: 'flex', alignItems: 'baseline', gap: 12 }}>
                   <span style={{ fontSize: 26, fontWeight: 600 }}>{item.name}</span>
+                  <TvTag project={project} item={item} size={15} />
+                  {item.kcal ? (
+                    <span style={{ fontSize: 18, color: withAlpha(project.colors.text, 0.5) }}>{item.kcal} kcal</span>
+                  ) : null}
                   <span style={{ flex: 1, borderBottom: `2px dotted ${withAlpha(project.colors.text, 0.25)}` }} />
-                  {project.showPrices && item.price !== null && (
-                    <span style={{ fontSize: 26, fontWeight: 700, color: project.colors.primary }}>
-                      {formatPrice(item.price, project.currency)}
-                    </span>
-                  )}
+                  <TvPrice project={project} item={item} size={26} />
                 </li>
               ))}
             </ul>
@@ -198,19 +237,20 @@ function GridBoard({ project, tokens }: { project: Project; tokens: SiteTokens }
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 28, padding: '36px 56px' }}>
         {products.slice(0, 8).map((item, i) => (
           <article key={item.id} style={{ ...tokens.card(), overflow: 'hidden' }}>
-            <div style={{ aspectRatio: '4 / 3', background: withAlpha(project.colors.accent, 0.3) }}>
+            <div style={{ position: 'relative', aspectRatio: '4 / 3', background: withAlpha(project.colors.accent, 0.3) }}>
               {item.imageUrl && <img src={item.imageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
               {!item.imageUrl && (
                 <div style={{ display: 'grid', placeItems: 'center', height: '100%', fontSize: 44, opacity: 0.35 }}>{i + 1}</div>
               )}
+              <span style={{ position: 'absolute', top: 16, left: 16 }}>
+                <TvTag project={project} item={item} size={16} />
+              </span>
             </div>
             <div style={{ padding: 20 }}>
               <p style={{ fontSize: 24, fontWeight: 700 }}>{item.name}</p>
-              {project.showPrices && item.price !== null && (
-                <p style={{ marginTop: 6, fontSize: 24, color: project.colors.primary, fontWeight: 700 }}>
-                  {formatPrice(item.price, project.currency)}
-                </p>
-              )}
+              <p style={{ marginTop: 6 }}>
+                <TvPrice project={project} item={item} size={24} />
+              </p>
             </div>
           </article>
         ))}
@@ -237,14 +277,25 @@ function PromoBoard({ project, tokens }: { project: Project; tokens: SiteTokens 
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', height: '100%' }}>
       <div style={{ background: project.colors.primary, color: onPrimary, padding: 72, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-        <p style={{ fontSize: 22, letterSpacing: '.2em', textTransform: 'uppercase', opacity: 0.8 }}>
-          {project.identity.businessName || 'Notre sélection'}
-        </p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+          <p style={{ fontSize: 22, letterSpacing: '.2em', textTransform: 'uppercase', opacity: 0.8 }}>
+            {project.identity.businessName || 'Notre sélection'}
+          </p>
+          <TvTag project={project} item={item} size={18} />
+        </div>
         <h2 style={{ ...tokens.heading(72), color: onPrimary, marginTop: 24 }}>{item.name}</h2>
         {item.description && <p style={{ marginTop: 24, fontSize: 28, lineHeight: 1.5, opacity: 0.9 }}>{item.description}</p>}
         {project.showPrices && item.price !== null && (
-          <p style={{ marginTop: 36, fontSize: 64, fontWeight: 800 }}>{formatPrice(item.price, project.currency)}</p>
+          <p style={{ marginTop: 36, display: 'flex', alignItems: 'baseline', gap: 24 }}>
+            <span style={{ fontSize: 64, fontWeight: 800 }}>{formatPrice(item.price, project.currency)}</span>
+            {item.oldPrice ? (
+              <span style={{ fontSize: 40, opacity: 0.6, textDecoration: 'line-through' }}>
+                {formatPrice(item.oldPrice, project.currency)}
+              </span>
+            ) : null}
+          </p>
         )}
+        {item.kcal ? <p style={{ marginTop: 16, fontSize: 24, opacity: 0.75 }}>{item.kcal} kcal</p> : null}
         {products.length > 1 && (
           <div style={{ display: 'flex', gap: 10, marginTop: 44 }}>
             {products.slice(0, 8).map((_, i) => (

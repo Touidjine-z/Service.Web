@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { Suspense, lazy, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   ArrowLeft, ArrowRight, Bookmark, Check, Eye, FileText, Images, Layers, Loader2,
@@ -7,6 +7,7 @@ import {
 } from 'lucide-react'
 import type { ModuleId, Viewport } from '@/engine/types'
 import SiteRenderer from '@/renderer/SiteRenderer'
+import { FluidEditContext, ROWS_KEY, breakpointOf, type FluidEdit } from '@/renderer/fluid'
 import { VIEWPORT_WIDTH } from '@/renderer/tokens'
 import { useProject } from '@/store/ProjectStore'
 import StepBar from '@/ui/StepBar'
@@ -15,6 +16,7 @@ import SectionsPanel from './SectionsPanel'
 import IdentityPanel from './IdentityPanel'
 import CatalogPanel from './CatalogPanel'
 import SettingsPanel from './SettingsPanel'
+import DesignPanel from './DesignPanel'
 import SeoPanel from './SeoPanel'
 
 /** La generation de QR embarque sa propre librairie : chargee a la demande. */
@@ -22,13 +24,14 @@ const QrPanel = lazy(() => import('./QrPanel'))
 import PropertiesPanel from './PropertiesPanel'
 import SaveProjectDialog from '@/features/final/SaveProjectDialog'
 
-type Tab = 'pages' | 'sections' | 'products' | 'services' | 'gallery' | 'identity' | 'seo' | 'qr' | 'settings'
+type Tab = 'design' | 'pages' | 'sections' | 'products' | 'services' | 'gallery' | 'identity' | 'seo' | 'qr' | 'settings'
 
 /** Onglets de la sidebar (§9). Un onglet catalogue n'apparait que si le module
  *  correspondant est actif : la sidebar reste courte pour un metier simple. */
 const TABS: { id: Tab; label: string; icon: typeof Layers; requires?: ModuleId[] }[] = [
   { id: 'pages', label: 'Pages', icon: FileText },
   { id: 'sections', label: 'Sections', icon: Layers },
+  { id: 'design', label: 'Design', icon: Palette },
   { id: 'products', label: 'Produits', icon: Package, requires: ['products', 'menu'] },
   { id: 'services', label: 'Services', icon: Wrench, requires: ['services'] },
   { id: 'gallery', label: 'Galerie', icon: Images, requires: ['gallery', 'portfolio'] },
@@ -61,7 +64,14 @@ export default function BuilderPage() {
   const [viewport, setViewport] = useState<Viewport>('desktop')
   const [pageId, setPageId] = useState(() => project.pages.find((p) => p.isHome)?.id ?? project.pages[0]?.id ?? '')
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  /** Bloc attrape sur la grille fluide (§14) : partage entre l'apercu et le panneau. */
+  const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null)
   const [saveOpen, setSaveOpen] = useState(false)
+
+  const selectSection = useCallback((sectionId: string | null) => {
+    setSelectedId(sectionId)
+    setSelectedBlockId(null)
+  }, [])
 
   // Un module retire peut faire disparaitre l'onglet ouvert.
   useEffect(() => {
@@ -111,6 +121,31 @@ export default function BuilderPage() {
 
   useEffect(() => { dispatch({ type: 'setStep', step: 'content' }) }, [dispatch])
 
+  /**
+   * Ce que le builder prete a la grille fluide. Le renderer ne connait ni le
+   * store ni la page courante : il recoit ces cinq verbes, et redevient un
+   * rendu inerte des qu'on le sort du builder (§22, §48).
+   */
+  const currentPageId = page?.id ?? ''
+  const fluidEdit = useMemo<FluidEdit>(() => ({
+    selectedBlockId,
+    select: (sectionId, blockId) => {
+      setSelectedId(sectionId)
+      setSelectedBlockId(blockId)
+    },
+    move: (sectionId, blockId, area) => dispatch({
+      type: 'setBlockLayout', pageId: currentPageId, sectionId, blockId, breakpoint: breakpointOf(viewport), area,
+    }),
+    setRows: (sectionId, rows) => dispatch({
+      type: 'updateSection', pageId: currentPageId, sectionId, props: { [ROWS_KEY[breakpointOf(viewport)]]: rows },
+    }),
+    duplicate: (sectionId, blockId) => dispatch({ type: 'duplicateBlock', pageId: currentPageId, sectionId, blockId }),
+    remove: (sectionId, blockId) => {
+      setSelectedBlockId((id) => (id === blockId ? null : id))
+      dispatch({ type: 'removeBlock', pageId: currentPageId, sectionId, blockId })
+    },
+  }), [selectedBlockId, currentPageId, viewport, dispatch])
+
   if (!page) {
     return (
       <div className="grid min-h-screen place-items-center p-8 text-center">
@@ -148,21 +183,13 @@ export default function BuilderPage() {
                 <Icon size={18} />
               </button>
             ))}
-            <button
-              type="button"
-              title="Thème et couleurs"
-              aria-label="Thème et couleurs"
-              onClick={() => navigate('/creer/theme')}
-              className="mt-auto rounded-xl p-2.5 text-subtle transition hover:bg-canvas hover:text-ink"
-            >
-              <Palette size={18} />
-            </button>
+
           </nav>
 
           <div className="flex w-72 min-h-0 flex-col">
             <div className="min-h-0 flex-1 overflow-y-auto">
-              {tab === 'pages' && <PagesPanel currentPageId={page.id} onSelect={(id) => { setPageId(id); setSelectedId(null) }} />}
-              {tab === 'sections' && <SectionsPanel page={page} selectedId={selectedId} onSelect={setSelectedId} />}
+              {tab === 'pages' && <PagesPanel currentPageId={page.id} onSelect={(id) => { setPageId(id); selectSection(null) }} />}
+              {tab === 'sections' && <SectionsPanel page={page} selectedId={selectedId} onSelect={selectSection} />}
               {tab === 'products' && <CatalogPanel catalog="products" />}
               {tab === 'services' && <CatalogPanel catalog="services" />}
               {tab === 'gallery' && <CatalogPanel catalog="gallery" />}
@@ -173,6 +200,7 @@ export default function BuilderPage() {
                   <QrPanel />
                 </Suspense>
               )}
+              {tab === 'design' && <DesignPanel />}
               {tab === 'settings' && <SettingsPanel />}
             </div>
           </div>
@@ -227,25 +255,27 @@ export default function BuilderPage() {
             </div>
           </div>
 
-          <div ref={stageRef} className="min-h-0 flex-1 overflow-auto bg-canvas p-6" onClick={() => setSelectedId(null)}>
+          <div ref={stageRef} className="min-h-0 flex-1 overflow-auto bg-canvas p-6" onClick={() => selectSection(null)}>
             <div style={{ width: deviceWidth * scale, height: frameHeight * scale, marginInline: 'auto' }}>
               <div
                 ref={frameRef}
                 className="overflow-hidden rounded-2xl border border-line bg-white shadow-card"
                 style={{ width: deviceWidth, transform: `scale(${scale})`, transformOrigin: 'top left' }}
               >
-                <SiteRenderer
-                  project={project}
-                  page={page}
-                  viewport={viewport}
-                  editable
-                  selectedSectionId={selectedId}
-                  onSelectSection={setSelectedId}
-                  onNavigate={(slug) => {
-                    const target = project.pages.find((p) => p.slug === slug)
-                    if (target) { setPageId(target.id); setSelectedId(null) }
-                  }}
-                />
+                <FluidEditContext.Provider value={fluidEdit}>
+                  <SiteRenderer
+                    project={project}
+                    page={page}
+                    viewport={viewport}
+                    editable
+                    selectedSectionId={selectedId}
+                    onSelectSection={selectSection}
+                    onNavigate={(slug) => {
+                      const target = project.pages.find((p) => p.slug === slug)
+                      if (target) { setPageId(target.id); selectSection(null) }
+                    }}
+                  />
+                </FluidEditContext.Provider>
               </div>
             </div>
           </div>
@@ -253,7 +283,13 @@ export default function BuilderPage() {
 
         {/* PROPRIETES */}
         <aside className="w-80 shrink-0 overflow-y-auto border-l border-line bg-surface">
-          <PropertiesPanel page={page} section={section} />
+          <PropertiesPanel
+            page={page}
+            section={section}
+            viewport={viewport}
+            selectedBlockId={selectedBlockId}
+            onSelectBlock={setSelectedBlockId}
+          />
         </aside>
       </div>
 

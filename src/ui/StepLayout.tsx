@@ -34,12 +34,16 @@ export default function StepLayout({
       <StepBar current={step} />
 
       <main className="container-page py-10 sm:py-14">
-        <header className="mb-8 max-w-2xl">
+        {/* Chaque etape est une route distincte : le composant est remonte, et
+            l'animation d'entree rejoue toute seule. */}
+        <header className="mb-8 max-w-2xl animate-fade-up">
           <h1 className="text-2xl font-bold tracking-tight text-ink sm:text-3xl">{title}</h1>
           {subtitle && <p className="mt-2 text-sm leading-relaxed text-muted sm:text-base">{subtitle}</p>}
         </header>
 
-        {children}
+        <div className="animate-fade-up" style={{ animationDelay: '80ms' }}>
+          {children}
+        </div>
       </main>
 
       <footer className="sticky bottom-0 border-t border-line bg-surface/90 backdrop-blur">

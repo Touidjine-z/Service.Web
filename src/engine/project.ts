@@ -1,10 +1,13 @@
-import type { Activity, ColorScheme, Identity, Page, Project, Section, SectionKind, ModuleId } from './types'
+import type {
+  Activity, Block, BlockSeed, ColorScheme, Identity, Page, Project, Section, SectionKind, ModuleId,
+} from './types'
 import { getActivity, CUSTOM_ACTIVITY } from './activities'
 import { getTheme } from './themes'
 import {
   isSectionAvailable, MODULE_BY_ID, modulesForObjectives,
   OBJECTIVE_GOVERNED_MODULES, orderModules,
 } from './modules'
+import { allowedModules, getPlan, planLimits, DEFAULT_PLAN_ID } from './plans'
 
 export function uid(prefix = 'id'): string {
   return `${prefix}_${Math.random().toString(36).slice(2, 10)}`
@@ -32,8 +35,24 @@ const EMPTY_IDENTITY: Identity = {
   social: {},
 }
 
-export function createSection(kind: SectionKind): Section {
-  return { id: uid('sec'), kind, props: {} }
+export function createBlock(seed: BlockSeed): Block {
+  const block: Block = { id: uid('blk'), type: seed.type, props: { ...seed.props } }
+  // Une variante peut livrer une mise en page toute faite sur la grille fluide.
+  if (seed.layout) block.layout = { ...seed.layout }
+  return block
+}
+
+/**
+ * Cree une section. La graine vient d'une variante du catalogue (§14) : elle
+ * ne fait que pre-remplir des champs declares et des blocs, jamais du style.
+ */
+export function createSection(
+  kind: SectionKind,
+  seed?: { props?: Record<string, unknown>; blocks?: BlockSeed[] },
+): Section {
+  const section: Section = { id: uid('sec'), kind, props: { ...seed?.props } }
+  if (seed?.blocks) section.blocks = seed.blocks.map(createBlock)
+  return section
 }
 
 export function createEmptyProject(): Project {
@@ -59,7 +78,9 @@ export function createEmptyProject(): Project {
     showPrices: true,
     grid: { columns: 3, cardSize: 'md', imageRatio: 'landscape', gap: 'normal', align: 'left' },
     step: 'activity',
+    plan: DEFAULT_PLAN_ID,
     priceRevealed: false,
+    domain: null,
     status: 'draft',
     lead: null,
   }
@@ -75,7 +96,7 @@ export function buildPages(activity: Activity, modules: ModuleId[]): Page[] {
     isHome: index === 0,
     sections: blueprint.sections
       .filter((kind) => isSectionAvailable(kind, modules))
-      .map(createSection),
+      .map((kind) => createSection(kind)),
     seo: { title: blueprint.name, description: '' },
   }))
 }
@@ -87,7 +108,10 @@ export function buildPages(activity: Activity, modules: ModuleId[]): Page[] {
  * structurels.
  */
 export function applyObjectives(project: Project, objectives: Project['objectives']): Project {
-  const wanted = modulesForObjectives(objectives)
+  // La formule (§60) plafonne ce que les objectifs peuvent activer. Sans cette
+  // ligne, cocher « recevoir des commandes » en formule modele ferait apparaitre
+  // un panier que `enforcePlan` retirerait juste apres : le projet battrait.
+  const wanted = allowedModules(getPlan(project), modulesForObjectives(objectives))
   // Un module qu'aucun objectif ne pilote (les horaires, par exemple) a ete
   // choisi par le metier ou par le client : les objectifs n'ont pas a le retirer.
   const kept = project.modules.filter((m) => !OBJECTIVE_GOVERNED_MODULES.has(m) || wanted.includes(m))
@@ -101,7 +125,7 @@ export function applyObjectives(project: Project, objectives: Project['objective
 export function applyActivity(project: Project, activityId: string, customLabel = ''): Project {
   const activity = activityId === 'custom' ? CUSTOM_ACTIVITY : getActivity(activityId)
   if (!activity) return project
-  const modules = [...activity.defaultModules]
+  const modules = allowedModules(getPlan(project), [...activity.defaultModules])
   const base: Project = {
     ...project,
     activityId: activity.id,
@@ -136,6 +160,36 @@ export function syncPagesWithModules(project: Project): Project {
 }
 
 /**
+ * Projette le projet dans les limites de sa formule (§60). Pure et IDEMPOTENTE.
+ *
+ * NON DESTRUCTIVE, et c'est tout l'arbitrage : elle ne touche qu'aux MODULES et
+ * au theme « custom ». Elle ne supprime jamais une page ni un produit — c'est du
+ * contenu redige, et `Page` n'a pas de champ `hidden` pour le mettre de cote.
+ * Les plafonds sont tenus ailleurs, par des gardes sur les actions d'ajout.
+ */
+export function enforcePlan(project: Project): Project {
+  const limits = planLimits(project)
+  const modules = project.modules.filter((m) => !limits.blockedModules.includes(m))
+  const themeId = project.themeId === 'custom' && !limits.customTheme ? 'modern' : project.themeId
+  // Cas de tres loin le plus frequent (sur-mesure, et tous les projets d'avant
+  // les formules) : identite stricte, cout nul, et l'historique undo/redo
+  // continue de voir un etat inchange.
+  if (modules.length === project.modules.length && themeId === project.themeId) return project
+  return syncPagesWithModules({ ...project, modules, themeId })
+}
+
+/**
+ * Changement explicite de formule. Seul endroit autorise a retirer une page — et
+ * uniquement une page NON-ACCUEIL devenue vide parce que tous ses modules
+ * viennent d'etre fermes (la page « Reserver » d'un restaurant). Ces pages sont
+ * NOMMEES dans la confirmation avant d'etre retirees, jamais en silence.
+ */
+export function applyPlan(project: Project, plan: Project['plan']): Project {
+  const next = enforcePlan({ ...project, plan })
+  return { ...next, pages: next.pages.filter((p) => p.isHome || p.sections.length > 0) }
+}
+
+/**
  * Ajoute sur l'accueil la section des modules qui viennent d'etre actives,
  * quand elle n'existe encore sur aucune page. Sans cela, activer une
  * fonctionnalite ne changerait rien de visible dans l'apercu.
@@ -155,7 +209,7 @@ export function addSectionsForModules(project: Project, added: ModuleId[]): Proj
   if (!project.pages[homeIndex]) return project
 
   const pages = project.pages.map((page, i) =>
-    i === homeIndex ? { ...page, sections: [...page.sections, ...missing.map(createSection)] } : page,
+    i === homeIndex ? { ...page, sections: [...page.sections, ...missing.map((kind) => createSection(kind))] } : page,
   )
   return { ...project, pages }
 }
@@ -186,6 +240,9 @@ export function slugify(value: string): string {
 /** Progression affichee dans la barre d'etapes (§49) — sans aucune mention de prix. */
 export const STEPS: { id: Project['step']; label: string }[] = [
   { id: 'activity', label: 'Activité' },
+  /* La formule (§60) se choisit avant les objectifs : on construit alors
+     directement dans le bon perimetre, au lieu de construire puis d'amputer. */
+  { id: 'plan', label: 'Formule' },
   { id: 'objectives', label: 'Objectifs' },
   { id: 'features', label: 'Fonctionnalités' },
   { id: 'design', label: 'Design' },

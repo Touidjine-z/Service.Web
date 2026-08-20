@@ -5,6 +5,7 @@ import { getTheme } from '@/engine/themes'
 import { useProject } from '@/store/ProjectStore'
 import StepLayout from '@/ui/StepLayout'
 import ColorField from '@/ui/ColorField'
+import FontPairPicker from '@/ui/FontPairPicker'
 import ThemeThumbnail from './ThemeThumbnail'
 import type { ColorScheme } from '@/engine/types'
 
@@ -46,8 +47,8 @@ export default function ColorsStep() {
   return (
     <StepLayout
       step="design"
-      title="Vos couleurs"
-      subtitle="Ajustez chaque couleur, ou laissez-nous générer une palette harmonieuse à partir de votre couleur principale."
+      title="Vos couleurs et votre typographie"
+      subtitle="Ajustez chaque couleur, générez une palette harmonieuse à partir de votre couleur principale, et choisissez les polices qui vous ressemblent."
       back="/creer/theme"
       next="/creer/site"
       nextLabel="Construire mon site"
@@ -89,6 +90,15 @@ export default function ColorsStep() {
             ))}
           </div>
 
+          <section className="mt-10">
+            <p className="label">Typographie</p>
+            <p className="mb-4 text-xs leading-relaxed text-subtle">
+              Chaque proposition est affichée avec ses vraies polices. « Polices du thème »
+              laisse le thème décider — vous pourrez en changer à tout moment.
+            </p>
+            <FontPairPicker />
+          </section>
+
           {issues.length > 0 && (
             <div className="mt-6 flex gap-3 rounded-xl border border-amber-300 bg-amber-50 p-4">
               <AlertTriangle size={16} className="mt-0.5 shrink-0 text-amber-600" />
@@ -109,7 +119,7 @@ export default function ColorsStep() {
         <aside className="lg:sticky lg:top-20 lg:self-start">
           <p className="label">Aperçu</p>
           <div className="aspect-[4/3] overflow-hidden rounded-2xl border border-line shadow-card">
-            <ThemeThumbnail theme={theme} colors={project.colors} />
+            <ThemeThumbnail theme={theme} colors={project.colors} fontPair={project.fontPair} />
           </div>
           <p className="mt-3 text-xs text-subtle">
             Aperçu réduit du thème {theme.name}. L'aperçu complet et navigable vous attend à l'étape suivante.

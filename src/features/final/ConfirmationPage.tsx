@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Check, Mail, Printer } from 'lucide-react'
+import { Check, Globe, Mail, Printer } from 'lucide-react'
 import type { Payment } from '@/engine/types'
 import { formatMoney } from '@/engine/pricing'
 import { paymentsForProject } from '@/store/db'
@@ -19,6 +19,7 @@ export default function ConfirmationPage() {
   }, [project.id])
 
   const lead = project.lead
+  const domain = project.domain
 
   return (
     <div className="min-h-screen bg-canvas">
@@ -38,6 +39,12 @@ export default function ConfirmationPage() {
             <Row label="Réalisation" value={formatMoney(quote.total, quote.currency)} />
             <Row label="Acompte payé" value={formatMoney(quote.deposit, quote.currency)} strong />
             <Row label="Solde à la livraison" value={formatMoney(quote.balance, quote.currency)} />
+            {domain && domain.status !== 'later' && domain.name && (
+              <Row
+                label="Nom de domaine"
+                value={domain.status === 'owned' ? `${domain.name} (le vôtre)` : domain.name}
+              />
+            )}
             {payment && (
               <>
                 <Row label="Transaction" value={payment.transactionRef} />
@@ -45,6 +52,12 @@ export default function ConfirmationPage() {
               </>
             )}
           </dl>
+
+          {domain?.status === 'wanted' && domain.name && (
+            <p className="mt-4 flex items-center justify-center gap-1.5 text-xs text-muted">
+              <Globe size={13} /> Nous réservons {domain.name} et le configurons avec votre site.
+            </p>
+          )}
 
           {lead && (
             <p className="mt-4 flex items-center justify-center gap-1.5 text-xs text-subtle">

@@ -43,6 +43,12 @@ await type('Nom', 'Durand')
 await type('Email', 'marc.durand@example.com')
 await click('Enregistrer mon projet')
 await new Promise(r => setTimeout(r, 900))
+// Nom de domaine (§59) : l'etape s'intercale entre la demande et l'acompte.
+// Ce scenario ne la teste pas — conversion.mjs s'en charge — il la traverse.
+await click('Choisir')
+await new Promise(r => setTimeout(r, 400))
+await click('Continuer vers')
+await new Promise(r => setTimeout(r, 700))
 await type('Titulaire de la carte', 'Marc Durand')
 await type('Numéro de carte', '4242424242424242')
 await type('Expiration', '1228')

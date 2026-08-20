@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react'
-import { Search, Sparkles } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { ClipboardList, Search, Sparkles } from 'lucide-react'
 import AssistantDialog from './AssistantDialog'
-import { SECTORS, CUSTOM_ACTIVITY } from '@/engine/activities'
+import { SECTORS, CUSTOM_ACTIVITY, matchesActivity } from '@/engine/activities'
 import { useProject } from '@/store/ProjectStore'
 import StepLayout from '@/ui/StepLayout'
 
@@ -14,10 +15,11 @@ export default function ActivityStep() {
   const [customLabel, setCustomLabel] = useState(project.customActivity)
 
   const sectors = useMemo(() => {
-    const q = query.trim().toLowerCase()
-    if (!q) return SECTORS
+    // La recherche porte aussi sur les mots-cles du metier : « carrosserie »
+    // doit trouver « Carrossier », « pneu » doit trouver « Pneus & jantes ».
+    if (!query.trim()) return SECTORS
     return SECTORS
-      .map((s) => ({ ...s, activities: s.activities.filter((a) => a.label.toLowerCase().includes(q)) }))
+      .map((s) => ({ ...s, activities: s.activities.filter((a) => matchesActivity(a, query)) }))
       .filter((s) => s.activities.length > 0)
   }, [query])
 
@@ -62,6 +64,9 @@ export default function ActivityStep() {
         <button type="button" className="btn-secondary" onClick={() => setAssistantOpen(true)}>
           <Sparkles size={16} /> Créer automatiquement mon site
         </button>
+        <Link to="/creer/express" className="btn-secondary">
+          <ClipboardList size={16} /> Remplir un formulaire
+        </Link>
       </div>
 
       <div className="space-y-10">

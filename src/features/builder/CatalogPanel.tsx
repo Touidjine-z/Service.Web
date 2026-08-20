@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { ChevronDown, ChevronUp, Copy, Eye, EyeOff, Image as ImageIcon, Plus, Trash2, X } from 'lucide-react'
-import type { GalleryItem, Product, Service } from '@/engine/types'
+import type { GalleryItem, Product, ProductTag, Service } from '@/engine/types'
+import { ALLERGENS, PRODUCT_TAGS } from '@/engine/catalog'
 import { CURRENCY_SYMBOL } from '@/renderer/samples'
+import { isTableService } from '@/renderer/sectionDefs'
 import { useProject } from '@/store/ProjectStore'
 import MediaPicker from './MediaPicker'
 
@@ -22,6 +24,9 @@ export default function CatalogPanel({ catalog }: { catalog: Catalog }) {
 
   const items = project[catalog]
   const labels = TITLES[catalog]
+  // Calories et allergenes ne sont demandes qu'aux metiers qui servent une
+  // carte : c'est le catalogue metier qui le dit, pas une branche par activite.
+  const menuLike = isTableService(project)
 
   function add() {
     if (catalog === 'products') dispatch({ type: 'addProduct' })
@@ -150,7 +155,27 @@ export default function CatalogPanel({ catalog }: { catalog: Catalog }) {
                           {project.categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                         </select>
                       </label>
-                      <Price label={`Prix (${CURRENCY_SYMBOL[project.currency]})`} value={product.price} onChange={(v) => patch(item.id, { price: v })} />
+                      <div className="grid grid-cols-2 gap-2">
+                        <Price label={`Prix (${CURRENCY_SYMBOL[project.currency]})`} value={product.price} onChange={(v) => patch(item.id, { price: v })} />
+                        <Price label="Prix barré" value={product.oldPrice ?? null} onChange={(v) => patch(item.id, { oldPrice: v })} placeholder="Aucun" />
+                      </div>
+                      <Chips
+                        label="Étiquettes"
+                        options={PRODUCT_TAGS.map((t) => ({ value: t.id, label: t.label }))}
+                        selected={product.tags ?? []}
+                        onChange={(v) => patch(item.id, { tags: v as ProductTag[] })}
+                      />
+                      {menuLike && (
+                        <>
+                          <Price label="Calories (kcal)" value={product.kcal ?? null} onChange={(v) => patch(item.id, { kcal: v })} step="1" placeholder="Non affichées" />
+                          <Chips
+                            label="Allergènes"
+                            options={ALLERGENS.map((a) => ({ value: a, label: a }))}
+                            selected={product.allergens ?? []}
+                            onChange={(v) => patch(item.id, { allergens: v })}
+                          />
+                        </>
+                      )}
                       <div className="flex items-center gap-2">
                         <Toggle label="Disponible" on={product.available} onChange={(v) => patch(item.id, { available: v })} />
                       </div>
@@ -230,7 +255,9 @@ function Area({ label, value, onChange }: { label: string; value: string; onChan
   )
 }
 
-function Price({ label, value, onChange }: { label: string; value: number | null; onChange: (v: number | null) => void }) {
+function Price({ label, value, onChange, step = '0.01', placeholder = 'Non affiché' }: {
+  label: string; value: number | null; onChange: (v: number | null) => void; step?: string; placeholder?: string
+}) {
   return (
     <label className="block text-xs font-medium text-muted">
       {label}
@@ -238,12 +265,41 @@ function Price({ label, value, onChange }: { label: string; value: number | null
         className="field mt-1 !py-2 text-sm"
         type="number"
         min={0}
-        step="0.01"
+        step={step}
         value={value ?? ''}
-        placeholder="Non affiché"
+        placeholder={placeholder}
         onChange={(e) => onChange(e.target.value === '' ? null : Number(e.target.value))}
       />
     </label>
+  )
+}
+
+/** Selection multiple en pastilles : etiquettes produit, allergenes. */
+function Chips({ label, options, selected, onChange }: {
+  label: string
+  options: { value: string; label: string }[]
+  selected: string[]
+  onChange: (values: string[]) => void
+}) {
+  return (
+    <div>
+      <p className="mb-1 text-xs font-medium text-muted">{label}</p>
+      <div className="flex flex-wrap gap-1.5">
+        {options.map((option) => {
+          const on = selected.includes(option.value)
+          return (
+            <button
+              key={option.value}
+              type="button"
+              onClick={() => onChange(on ? selected.filter((v) => v !== option.value) : [...selected, option.value])}
+              className={`rounded-lg px-2 py-1 text-xs transition ${on ? 'bg-brand text-brand-ink' : 'bg-canvas text-muted hover:text-ink'}`}
+            >
+              {option.label}
+            </button>
+          )
+        })}
+      </div>
+    </div>
   )
 }
 

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=Roboto+Slab:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=Roboto+Slab:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500&family=Fraunces:wght@600;700&family=Bebas+Neue&family=Oswald:wght@500;600;700&family=Outfit:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&family=Cormorant+Garamond:wght@500;600;700&family=Lora:wght@400;500;600;700&family=Atkinson+Hyperlegible:wght@400;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -101,3 +101,162 @@
 
 /* Repere de section, visible seulement au survol pendant l'edition. */
 .section-shell:hover .section-tag { opacity: 1 !important; }
+
+/* ---------------------------------------------------------------------------
+   Decors et animations de la vitrine (§4). Tout ce qui suit est purement
+   decoratif : la regle globale `prefers-reduced-motion` plus haut suffit a
+   l'arreter, et rien ici n'entre dans `.site-root`.
+   --------------------------------------------------------------------------- */
+
+@layer components {
+  /* Halo colore anime en fond de section. */
+  .aurora {
+    position: absolute;
+    inset: -20% -10% auto -10%;
+    height: 44rem;
+    pointer-events: none;
+    filter: blur(60px);
+    opacity: 0.55;
+    background:
+      radial-gradient(38% 44% at 22% 30%, rgb(var(--brand) / 0.42), transparent 70%),
+      radial-gradient(34% 40% at 76% 26%, rgba(56, 189, 248, 0.38), transparent 72%),
+      radial-gradient(30% 38% at 52% 68%, rgba(236, 72, 153, 0.22), transparent 70%);
+    animation: gradient-pan 16s ease-in-out infinite;
+    background-size: 160% 160%;
+  }
+
+  /* Trame discrete facon papier millimetre, sous le hero. */
+  .grid-veil {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image:
+      linear-gradient(to right, rgb(var(--line) / 0.6) 1px, transparent 1px),
+      linear-gradient(to bottom, rgb(var(--line) / 0.6) 1px, transparent 1px);
+    background-size: 46px 46px;
+    mask-image: radial-gradient(70% 60% at 50% 30%, #000 20%, transparent 80%);
+    -webkit-mask-image: radial-gradient(70% 60% at 50% 30%, #000 20%, transparent 80%);
+  }
+
+  .glass {
+    background: rgb(var(--surface) / 0.72);
+    backdrop-filter: blur(14px) saturate(140%);
+    border: 1px solid rgb(var(--line) / 0.9);
+  }
+
+  .text-gradient {
+    background-image: linear-gradient(100deg, rgb(var(--brand)), #0ea5e9 45%, #a855f7 85%);
+    background-size: 220% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: gradient-pan 8s ease-in-out infinite;
+  }
+
+  /* Bandeau defilant : la piste contient deux copies, d'ou le -50%. */
+  .marquee {
+    overflow: hidden;
+    mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+  }
+
+  .marquee-track {
+    display: flex;
+    width: max-content;
+    animation: marquee 38s linear infinite;
+  }
+
+  .marquee:hover .marquee-track { animation-play-state: paused; }
+
+  .marquee-group {
+    display: flex;
+    align-items: center;
+    gap: 2.5rem;
+    padding-right: 2.5rem;
+    flex-shrink: 0;
+  }
+
+  /* Bordure degradee animee, pour la carte mise en avant. */
+  .ring-gradient {
+    position: relative;
+    isolation: isolate;
+  }
+
+  .ring-gradient::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(120deg, rgb(var(--brand)), #38bdf8, #a855f7, rgb(var(--brand)));
+    background-size: 300% 300%;
+    animation: gradient-pan 7s ease-in-out infinite;
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    mask-composite: exclude;
+    z-index: -1;
+  }
+
+  /* Carte qui se souleve au survol : reflexe commun a toute la vitrine. */
+  .hover-lift {
+    transition: transform .35s cubic-bezier(.2,.7,.3,1), box-shadow .35s cubic-bezier(.2,.7,.3,1), border-color .3s;
+  }
+
+  .hover-lift:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 2px 4px rgb(16 24 40 / 0.04), 0 24px 48px -24px rgb(16 24 40 / 0.22);
+  }
+
+  /* Pastille de disponibilite avec onde. */
+  .live-dot { position: relative; display: inline-flex; }
+  .live-dot::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 999px;
+    background: currentColor;
+    animation: pulse-ring 2.2s cubic-bezier(.2,.7,.3,1) infinite;
+  }
+}
+
+/* Barre de lecture en haut de page. */
+.scroll-progress {
+  transform-origin: 0 50%;
+  transition: transform .08s linear;
+}
+
+/* Masque le defilement horizontal des rails (galerie de themes, avis). */
+.no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+
+/* ---------------------------------------------------------------------------
+   Animations propres au site du client. Prefixees `site-` et posees ici parce
+   qu'un `@keyframes` ne peut pas vivre dans un style inline : le renderer y
+   fait reference, mais aucune classe de la plateforme n'entre dans `.site-root`.
+   --------------------------------------------------------------------------- */
+
+@keyframes site-marquee {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-50%, 0, 0); }
+}
+
+.site-root .site-marquee {
+  display: flex;
+  width: max-content;
+  animation: site-marquee var(--site-marquee-duration, 34s) linear infinite;
+}
+
+.site-root .site-marquee:hover { animation-play-state: paused; }
+
+/* Celebration de la page finale (cf. ui/Confetti.tsx). */
+@keyframes confetti-fall {
+  from { transform: translate3d(0, 0, 0) rotate(0deg); opacity: 1; }
+  to { transform: translate3d(var(--confetti-drift, 0), 105vh, 0) rotate(540deg); opacity: 0; }
+}
+
+/* Balayage de la demonstration du hero (cf. features/landing/SiteShowcase.tsx). */
+@keyframes showcase-pan {
+  0%, 8% { transform: translateY(0); }
+  92%, 100% { transform: translateY(var(--showcase-pan, 0)); }
+}

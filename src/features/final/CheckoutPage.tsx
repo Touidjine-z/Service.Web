@@ -24,6 +24,7 @@ export default function CheckoutPage() {
   const [card, setCard] = useState({ number: '', expiry: '', cvc: '', name: '' })
 
   const lead = project.lead
+  const domain = project.domain
   const digits = card.number.replace(/\s/g, '')
   const valid = digits.length >= 12 && /^\d{2}\/\d{2}$/.test(card.expiry) && card.cvc.length >= 3 && card.name.trim().length >= 3
 
@@ -125,6 +126,31 @@ export default function CheckoutPage() {
                 <Line label="Réalisation" value={formatMoney(quote.total, quote.currency)} />
                 <Line label="Solde à la livraison" value={formatMoney(quote.balance, quote.currency)} />
               </dl>
+
+              {/* Nom de domaine retenu a l'etape precedente (§59). */}
+              {domain && (
+                <div className="mt-3 border-t border-line pt-3">
+                  <p className="text-xs text-muted">
+                    {domain.status === 'later' ? (
+                      'Nom de domaine : à choisir plus tard.'
+                    ) : (
+                      <>
+                        Nom de domaine : <strong className="text-ink">{domain.name}</strong>
+                        {domain.status === 'owned' && ' (déjà le vôtre)'}
+                      </>
+                    )}
+                  </p>
+                  {domain.status === 'wanted' && domain.price !== null && (
+                    <p className="mt-1 text-[11px] leading-relaxed text-subtle">
+                      Le domaine est facturé par le registrar ({formatMoney(domain.price, domain.currency)} la
+                      première année) et n'entre pas dans le montant ci-dessus.
+                    </p>
+                  )}
+                  <button type="button" className="btn-ghost mt-1 !px-0 text-[11px]" onClick={() => navigate('/creer/domaine')}>
+                    Modifier
+                  </button>
+                </div>
+              )}
               <div className="mt-3 flex items-baseline justify-between border-t border-line pt-3">
                 <span className="text-sm font-semibold text-ink">À payer maintenant</span>
                 <span className="text-xl font-extrabold text-brand">{formatMoney(quote.deposit, quote.currency)}</span>
