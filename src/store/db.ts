@@ -1,5 +1,5 @@
 import Dexie, { type Table } from 'dexie'
-import type { Project, Lead } from '@/engine/types'
+import type { Project, Lead, Order, Payment } from '@/engine/types'
 
 /**
  * Persistance locale. Le client construit gratuitement, sans compte ni
@@ -30,6 +30,8 @@ class ServiceWebDB extends Dexie {
   projects!: Table<StoredProject, string>
   versions!: Table<ProjectVersion, number>
   leads!: Table<StoredLead, number>
+  payments!: Table<Payment, string>
+  orders!: Table<Order, string>
 
   constructor() {
     super('service-web')
@@ -37,6 +39,14 @@ class ServiceWebDB extends Dexie {
       projects: 'id, updatedAt',
       versions: '++id, projectId, createdAt',
       leads: '++id, projectId, email',
+    })
+    // v2 : paiements (§32) et commandes passees sur le site du client.
+    this.version(2).stores({
+      projects: 'id, updatedAt',
+      versions: '++id, projectId, createdAt',
+      leads: '++id, projectId, email',
+      payments: 'id, projectId, status, createdAt',
+      orders: 'id, projectId, status, createdAt',
     })
   }
 }
@@ -71,5 +81,37 @@ export async function listVersions(projectId: string): Promise<ProjectVersion[]>
 }
 
 export async function saveLead(projectId: string, lead: Lead): Promise<void> {
+  // Un projet = un lead (§36) : on remplace au lieu d'empiler les doublons.
+  const existing = await db.leads.where('projectId').equals(projectId).primaryKeys()
+  if (existing.length) await db.leads.bulkDelete(existing as number[])
   await db.leads.add({ ...lead, projectId })
+}
+
+export async function listLeads(): Promise<StoredLead[]> {
+  return db.leads.toArray()
+}
+
+export async function savePayment(payment: Payment): Promise<void> {
+  await db.payments.put(payment)
+}
+
+export async function listPayments(): Promise<Payment[]> {
+  return db.payments.orderBy('createdAt').reverse().toArray()
+}
+
+export async function paymentsForProject(projectId: string): Promise<Payment[]> {
+  return db.payments.where('projectId').equals(projectId).toArray()
+}
+
+export async function saveOrder(order: Order): Promise<void> {
+  await db.orders.put(order)
+}
+
+export async function listOrders(projectId?: string): Promise<Order[]> {
+  if (projectId) return db.orders.where('projectId').equals(projectId).toArray()
+  return db.orders.orderBy('createdAt').reverse().toArray()
+}
+
+export async function deleteVersion(id: number): Promise<void> {
+  await db.versions.delete(id)
 }

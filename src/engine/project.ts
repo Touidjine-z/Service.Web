@@ -57,6 +57,7 @@ export function createEmptyProject(): Project {
     grid: { columns: 3, cardSize: 'md', imageRatio: 'landscape', gap: 'normal', align: 'left' },
     step: 'activity',
     priceRevealed: false,
+    status: 'draft',
     lead: null,
   }
 }

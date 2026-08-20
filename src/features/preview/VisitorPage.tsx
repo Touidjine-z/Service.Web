@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, Monitor, Smartphone, Tablet, Tv } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Monitor, Smartphone, Tablet, Tv } from 'lucide-react'
 import type { Viewport } from '@/engine/types'
 import SiteRenderer from '@/renderer/SiteRenderer'
 import { VIEWPORT_WIDTH } from '@/renderer/tokens'
@@ -107,6 +107,12 @@ export default function VisitorPage() {
               </button>
             ))}
           </div>
+
+          <span className="h-6 w-px bg-line" />
+
+          <button type="button" className="btn-primary !py-2 text-xs" onClick={() => navigate('/creer/final')}>
+            J'ai terminé <ArrowRight size={14} />
+          </button>
         </div>
       </div>
     </div>

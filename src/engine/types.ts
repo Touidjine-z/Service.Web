@@ -210,10 +210,66 @@ export interface Project {
   /** Le prix n'est revele qu'apres passage explicite par la page finale (§56). */
   priceRevealed: boolean
 
+  status: ProjectStatus
+
   lead: Lead | null
 }
 
 export type BuilderStep = 'activity' | 'objectives' | 'features' | 'design' | 'content' | 'preview' | 'final'
+
+/**
+ * Statuts du projet (§34). L'ordre du tableau est l'ordre du cycle de vie :
+ * l'administration s'en sert pour proposer l'etape suivante.
+ */
+export type ProjectStatus =
+  | 'draft'
+  | 'saved'
+  | 'requested'
+  | 'payment-pending'
+  | 'deposit-paid'
+  | 'client-contacted'
+  | 'quote-confirmed'
+  | 'preparing'
+  | 'developing'
+  | 'reviewing'
+  | 'delivered'
+  | 'done'
+
+/** Trace d'un paiement (§32). */
+export interface Payment {
+  id: string
+  projectId: string
+  total: number
+  deposit: number
+  balance: number
+  currency: string
+  /** Reference de transaction ; fournie par Stripe une fois branche. */
+  transactionRef: string
+  createdAt: string
+  paidAt: string | null
+  status: 'pending' | 'paid' | 'failed'
+  method: 'simulated' | 'stripe'
+}
+
+/** Commande passee par un visiteur sur le site du client (modules cart/order). */
+export interface OrderLine {
+  productId: string
+  name: string
+  variant: string | null
+  unitPrice: number | null
+  quantity: number
+}
+
+export interface Order {
+  id: string
+  projectId: string
+  createdAt: string
+  customer: { name: string; email: string; phone: string; note: string }
+  lines: OrderLine[]
+  total: number
+  currency: Currency
+  status: 'new' | 'accepted' | 'done' | 'cancelled'
+}
 
 export interface Lead {
   firstName: string

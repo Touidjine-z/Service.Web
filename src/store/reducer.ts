@@ -303,8 +303,12 @@ export function reducer(project: Project, action: Action): Project {
     case 'revealPrice':
       return touch({ ...project, priceRevealed: true, step: 'final' })
 
+    case 'setStatus':
+      return touch({ ...project, status: action.status })
+
     case 'setLead':
-      return touch({ ...project, lead: action.lead })
+      // Enregistrer son projet suffit a en faire un lead (§28).
+      return touch({ ...project, lead: action.lead, status: project.status === 'draft' ? 'saved' : project.status })
 
     default:
       return project

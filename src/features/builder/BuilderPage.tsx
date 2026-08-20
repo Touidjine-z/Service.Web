@@ -1,8 +1,8 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  ArrowLeft, ArrowRight, Eye, FileText, Images, Layers, Loader2, Monitor, Package,
-  Palette, Redo2, Settings, Smartphone, Tablet, Tv, Undo2, User, Wrench,
+  ArrowLeft, ArrowRight, Bookmark, Check, Eye, FileText, Images, Layers, Loader2,
+  Monitor, Package, Palette, Redo2, Settings, Smartphone, Tablet, Tv, Undo2, User, Wrench,
 } from 'lucide-react'
 import type { ModuleId, Viewport } from '@/engine/types'
 import SiteRenderer from '@/renderer/SiteRenderer'
@@ -15,6 +15,7 @@ import IdentityPanel from './IdentityPanel'
 import CatalogPanel from './CatalogPanel'
 import SettingsPanel from './SettingsPanel'
 import PropertiesPanel from './PropertiesPanel'
+import SaveProjectDialog from '@/features/final/SaveProjectDialog'
 
 type Tab = 'pages' | 'sections' | 'products' | 'services' | 'gallery' | 'identity' | 'settings'
 
@@ -53,6 +54,7 @@ export default function BuilderPage() {
   const [viewport, setViewport] = useState<Viewport>('desktop')
   const [pageId, setPageId] = useState(() => project.pages.find((p) => p.isHome)?.id ?? project.pages[0]?.id ?? '')
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [saveOpen, setSaveOpen] = useState(false)
 
   // Un module retire peut faire disparaitre l'onglet ouvert.
   useEffect(() => {
@@ -197,6 +199,10 @@ export default function BuilderPage() {
             </div>
 
             <div className="flex items-center gap-2">
+              <button type="button" className="btn-ghost !py-2 text-xs" onClick={() => setSaveOpen(true)}>
+                {project.lead ? <Check size={14} /> : <Bookmark size={14} />}
+                {project.lead ? 'Projet enregistré' : 'Enregistrer mon projet'}
+              </button>
               <button type="button" className="btn-secondary !py-2 text-xs" onClick={() => navigate('/apercu')}>
                 <Eye size={14} /> Mode visiteur
               </button>
@@ -237,10 +243,17 @@ export default function BuilderPage() {
         <button type="button" className="btn-ghost" onClick={() => navigate('/creer/couleurs')}>
           <ArrowLeft size={16} /> Retour
         </button>
-        <button type="button" className="btn-primary" onClick={() => navigate('/apercu')}>
-          Voir mon site <ArrowRight size={16} />
-        </button>
+        <div className="flex items-center gap-2">
+          <button type="button" className="btn-secondary" onClick={() => navigate('/apercu')}>
+            <Eye size={16} /> Voir mon site
+          </button>
+          <button type="button" className="btn-primary" onClick={() => navigate('/creer/final')}>
+            J'ai terminé <ArrowRight size={16} />
+          </button>
+        </div>
       </footer>
+
+      {saveOpen && <SaveProjectDialog onClose={() => setSaveOpen(false)} />}
     </div>
   )
 }

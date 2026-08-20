@@ -1,7 +1,7 @@
 import type {
   Project, ObjectiveId, ModuleId, ThemeId, ColorScheme, Identity,
   Page, Section, Product, Service, Category, GalleryItem, GridSettings,
-  Currency, BuilderStep, Lead, SectionKind,
+  Currency, BuilderStep, Lead, ProjectStatus, SectionKind,
 } from '@/engine/types'
 
 export type Action =
@@ -48,5 +48,6 @@ export type Action =
   | { type: 'setShowPrices'; showPrices: boolean }
   | { type: 'revealPrice' }
   | { type: 'setLead'; lead: Lead }
+  | { type: 'setStatus'; status: ProjectStatus }
 
 export type { Category }
