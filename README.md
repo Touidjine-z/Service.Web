@@ -19,6 +19,7 @@ npm install
 npm run dev        # http://localhost:5173
 npm run build      # tsc --noEmit puis build de production
 npm run typecheck
+npm run smoke      # scénarios navigateur (voir scripts/README.md)
 ```
 
 Node 18 requis (contrainte du poste) — d'où Vite 5 et Tailwind 3.4.
@@ -40,6 +41,8 @@ src/
     color.ts         HEX/RGB/HSL, génération de palette, contraste WCAG
     imageBank.ts     Banque d'images, 10 catégories
     pricing.ts       Pricing engine + règle d'acompte, piloté par PricingRules
+    status.ts        Cycle de vie d'un projet
+    assistant.ts     Assistant de création (analyse locale, pas de modèle)
     project.ts       Fabrique de projet, application métier/thème
   renderer/          Rendu du site du client
     tokens.ts        Thème → styles concrets (le seul endroit où ça se produit)
@@ -47,12 +50,15 @@ src/
     Sections.tsx     Rendu des sections
     SiteRenderer.tsx Navigation, sections, pied de page
     samples.ts       Contenu d'exemple tant que le client n'a rien saisi
+    commerce.ts      Panier et commande du site du client
   store/
     reducer.ts       Toutes les mutations du projet
     ProjectStore.tsx Contexte + undo/redo + autosave
     db.ts            Persistance Dexie (projets, versions, leads)
   ui/                Primitives partagées de la plateforme
   features/          Un dossier par écran
+    landing, onboarding, builder, preview, final, tv, admin
+scripts/             Scénarios de test joués dans un vrai navigateur
 ```
 
 Deux points d'architecture portent tout le reste :
@@ -76,18 +82,26 @@ Deux points d'architecture portent tout le reste :
 
 ## État
 
-**Phases 1 et 2 terminées.** Le client peut aujourd'hui aller de la landing
-jusqu'à un site complet, navigable et testé en mode visiteur, sans jamais voir
-de prix de réalisation.
+Le tunnel complet fonctionne : un professionnel va de la landing jusqu'au
+paiement de l'acompte, et son projet apparaît en administration.
 
 | Phase | Contenu | État |
 | --- | --- | --- |
 | 1 — Expérience de création | Landing, activité, objectifs, fonctionnalités, thèmes, couleurs, pages, sections, aperçu, responsive, sauvegarde | Terminée |
 | 2 — Contenu | Produits, services, galerie, images, formulaires | Terminée |
-| 3 — Conversion | Lead, page finale, révélation du prix, acompte, checkout | À faire |
-| 4 — Admin | Dashboard, projets, leads, paiements, pricing rules, statuts | À faire |
-| 5 — Avancé | TV, QR, IA, SEO, versioning | Socle posé (`db.ts`) |
+| 3 — Conversion | Lead, page finale, révélation du prix, acompte, checkout | Terminée, paiement simulé |
+| 4 — Admin | Dashboard, projets, leads, paiements, pricing rules, statuts, versions | Terminée |
+| 5 — Avancé | TV, QR, assistant, SEO, versioning | Terminée, assistant local |
 | 6 — SaaS | Publication, hébergement, domaines, abonnements | À faire |
 
-Le pricing engine et la persistance des leads et versions existent déjà côté
-moteur ; il leur manque les écrans de la phase 3.
+Deux réserves, détaillées dans [`FONCTIONNEMENT.md`](FONCTIONNEMENT.md) :
+
+- **Le paiement est simulé.** Le contrat de données est celui de Stripe, il
+  manque la clé, l'appel serveur et le webhook. L'écran de paiement le dit au
+  client.
+- **Tout vit dans l'IndexedDB du navigateur.** Un client qui change d'appareil
+  ne retrouve pas son projet, et l'administration ne voit que ce qui a été créé
+  sur la même machine. C'est la première brique à poser pour passer au produit.
+
+Et un point de sécurité : `/admin` n'est protégé par aucune authentification.
+**À traiter avant toute mise en ligne.**

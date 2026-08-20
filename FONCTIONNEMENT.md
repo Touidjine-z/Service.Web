@@ -19,7 +19,8 @@ visiteur. **À aucun moment il ne voit le prix de réalisation.**
 ```
 Landing → Activité → Objectifs → Fonctionnalités → Thème → Couleurs
         → Builder (pages, sections, contenu) → Mode visiteur
-        → [phase 3 : page finale, prix, acompte, paiement]
+        → Page finale → Révélation du prix → Acompte → Paiement
+        → Administration (projets, leads, paiements, tarification)
 ```
 
 Une barre de progression en 7 étapes (Activité, Objectifs, Fonctionnalités,
@@ -194,6 +195,62 @@ flottante subsiste : retour à l'édition et choix du support.
 C'est le moment de projection du produit (§54) — et donc, plus que partout
 ailleurs, un écran sans le moindre prix de réalisation.
 
+### 2.10 Page finale — `/creer/final` (§29, §30)
+
+Le seul écran du parcours où un prix de réalisation a le droit d'exister — et
+seulement après que le client a cliqué sur **« Voir le prix de réalisation »**.
+
+Avant ce clic : « Votre site est prêt », l'aperçu réel du site, et le
+récapitulatif de ce qu'il contient (pages, fonctionnalités, design, version
+mobile, responsive, produits et services). Aucun montant.
+
+Après ce clic : le détail du devis ligne par ligne, la **réalisation**,
+l'**acompte pour démarrer** et le **solde restant**.
+
+### 2.11 Enregistrer son projet (§28)
+
+Aucune information personnelle n'est demandée pendant la création. Le formulaire
+n'apparaît qu'au moment d'enregistrer — depuis le builder, ou au moment de
+demander la réalisation : prénom, nom et email requis, téléphone et entreprise
+facultatifs. Enregistrer suffit à devenir un lead.
+
+### 2.12 Paiement de l'acompte — `/paiement`, `/confirmation` (§32)
+
+Récapitulatif, formulaire de carte, puis confirmation avec référence de
+transaction, montants et date.
+
+**Le paiement est simulé et l'écran le dit** : aucune carte n'est débitée,
+aucune donnée bancaire n'est transmise, et aucun email n'est réellement envoyé.
+La transaction est écrite en base pour permettre de jouer le parcours complet.
+
+### 2.13 Écran TV — `/tv` (§24)
+
+Format 16:9, plein écran, alimenté par le vrai catalogue et les couleurs du
+thème. Trois mises en page : **Carte** (colonnes par catégorie, pour un
+restaurant), **Vitrine** (grille de produits avec images), **Mise en avant**
+(un produit à la fois, en rotation).
+
+### 2.14 Administration — `/admin` (§33 à §38)
+
+Quatre onglets, avec recherche.
+
+- **Projets** — client, entreprise, activité, date, prix, acompte, statut ;
+  filtres par étape du cycle de vie. Ouvrir un projet donne la vue complète
+  (§35) : ce que le client a construit, ses couleurs, son logo, ses pages et
+  sections, son catalogue, ses fonctionnalités, son devis, ses paiements, ses
+  coordonnées, ses commandes reçues — et **« Voir la maquette »** dans les trois
+  formats. Le statut se change librement ou passe à l'étape suivante (§34).
+  Une version peut être enregistrée puis restaurée (§45).
+- **Leads** (§36) — nom, entreprise, email, téléphone, activité, ville, date,
+  prix estimé, acompte, statut.
+- **Paiements** — transaction, client, date, total, acompte, solde, statut.
+- **Tarification** (§38) — tous les montants sont éditables ici : prix de base,
+  pages incluses, page supplémentaire, design sur mesure, **prix de chaque
+  module**, paliers de catalogue, taux et minimum d'acompte. Chaque changement
+  est horodaté dans un historique. Les règles enregistrées pilotent réellement
+  le parcours client : le devis est calculé avec elles, pas avec les valeurs
+  par défaut.
+
 ---
 
 ## 3. Le moteur
@@ -243,7 +300,44 @@ Tant que le client n'a rien saisi, les grilles affichent des exemples neutres
 l'impression d'un site inachevé et casserait la projection. Le premier produit
 réel les fait disparaître.
 
-### 3.5 Banque d'images (§18)
+### 3.5 Panier et commande
+
+Quand le module Panier ou Commande est actif, le site du client accepte les
+commandes en mode visiteur : bouton d'ajout sur chaque produit, quantités,
+retrait, puis un formulaire (nom, email, téléphone, précisions).
+
+Si aucun produit n'a de prix — un professionnel qui préfère « sur devis » —
+la commande devient une **demande de devis** sans rien changer au parcours.
+
+Les commandes reçues remontent dans la vue projet de l'administration, avec leur
+statut : nouvelle, acceptée, traitée, annulée.
+
+### 3.6 QR codes (§25)
+
+Site, carte, commande, vitrine, et un code par table, téléchargeables en PNG.
+Ils pointent vers l'adresse du futur site, saisie dans le panneau en attendant
+la publication.
+
+### 3.7 Référencement (§40)
+
+Par page : titre, description, adresse, avec compteurs de longueur et **aperçu
+du rendu dans Google**. Pour tout le site : favicon et aperçu du partage sur les
+réseaux (Open Graph).
+
+### 3.8 Assistant de création (§39)
+
+« Créer automatiquement mon site » analyse une phrase — *« Je suis menuisier à
+Blois et je fabrique des meubles sur mesure »* — et propose le métier, la ville,
+un thème assorti, une palette, un slogan, une présentation et une FAQ. Deux
+autres boutons dans le builder : **Améliorer ce texte** et **Proposer** sur les
+listes.
+
+**Aucun modèle de langage n'est utilisé.** L'analyse est locale, par mots-clés,
+et les textes viennent de gabarits ; l'écran l'annonce plutôt que de laisser
+croire à une IA. L'interface `AssistantProvider` est la couture prévue pour
+brancher un vrai modèle : l'appelant ne changera pas.
+
+### 3.9 Banque d'images (§18)
 
 **Dix catégories** : Restauration, Entreprise, Bâtiment, Bois, Santé, Beauté,
 Automobile, Immobilier, Technologie, Lifestyle — six visuels chacune, soit 60 au
@@ -302,20 +396,36 @@ catalogue, un supplément pour le design sur mesure. L'acompte vaut
 `max(10 % du total, 50 €)`.
 
 **Aucun montant n'est codé en dur dans un composant** : tout vient de
-`PricingRules`, destiné à devenir éditable depuis l'administration. Les valeurs
-actuelles sont des valeurs de départ, à valider avant la mise en service.
+`PricingRules`, désormais éditable depuis l'administration (§38) et persistée.
+Les valeurs par défaut ne servent que de repli au premier lancement — **elles
+restent à valider avant la mise en service**.
 
 ---
 
 ## 6. Ce qui n'existe pas encore
 
-- **Phase 3 — conversion** : capture du lead, page « votre site est prêt »,
-  révélation du prix, acompte, checkout et paiement.
-- **Phase 4 — administration** : dashboard, liste des projets et des leads,
-  paiements, édition des règles de tarification, statuts.
-- **Phase 5 — avancé** : affichage TV et QR code (les modules existent, les
-  écrans dédiés non), assistance IA, SEO avancé, interface de versioning.
-- **Phase 6 — SaaS** : publication, hébergement, domaines, abonnements,
-  multi-sites, statistiques.
-- Panier et tunnel de commande côté site client : les modules sont activables et
-  entrent dans le devis, mais ne sont pas encore rendus.
+Tout ce qui reste demande une infrastructure que le navigateur ne peut pas
+fournir : un serveur, des comptes, des noms de domaine, un compte Stripe.
+
+- **Paiement réel** : le contrat de données `Payment` est celui attendu par
+  Stripe (projet, client, total, acompte, solde, date, transaction, statut) ;
+  il manque la clé, l'appel serveur et le webhook de confirmation.
+- **Emails transactionnels** : confirmation de commande, de paiement, relances.
+- **Comptes et authentification** : l'administration est aujourd'hui accessible
+  à qui connaît l'adresse `/admin`. **Elle doit être protégée avant toute mise
+  en ligne.**
+- **Backend persistant** : tout vit dans l'IndexedDB du navigateur. Un client
+  qui change d'appareil ne retrouve pas son projet, et l'administration ne voit
+  que les projets créés sur la même machine. C'est la première brique à poser
+  pour passer du prototype au produit.
+- **Phase 6 — SaaS** : publication du site, hébergement, noms de domaine,
+  abonnements, multi-sites, statistiques.
+- **Interface de comparaison des versions** : enregistrer et restaurer existent
+  (§45), comparer non.
+
+## 7. Vérification
+
+Cinq scénarios sont joués dans un vrai navigateur (`scripts/`, voir son
+`README`) : parcours de création, conversion, administration, commerce,
+fonctions avancées. Ils contrôlent notamment la règle d'acompte, la répercussion
+des tarifs sur les devis, et l'absence de tout montant avant la révélation.
