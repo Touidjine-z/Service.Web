@@ -1,5 +1,6 @@
 import Dexie, { type Table } from 'dexie'
 import type { Project, Lead, Order, Payment } from '@/engine/types'
+import type { PricingRules } from '@/engine/pricing'
 
 /**
  * Persistance locale. Le client construit gratuitement, sans compte ni
@@ -26,12 +27,29 @@ export interface StoredLead extends Lead {
   projectId: string
 }
 
+/** Reglages d'administration, stockes par cle (§38). */
+export interface Setting {
+  key: string
+  value: unknown
+}
+
+/** Historique des changements de tarification (§38). */
+export interface PricingChange {
+  id?: number
+  changedAt: string
+  field: string
+  before: number | null
+  after: number | null
+}
+
 class ServiceWebDB extends Dexie {
   projects!: Table<StoredProject, string>
   versions!: Table<ProjectVersion, number>
   leads!: Table<StoredLead, number>
   payments!: Table<Payment, string>
   orders!: Table<Order, string>
+  settings!: Table<Setting, string>
+  pricingHistory!: Table<PricingChange, number>
 
   constructor() {
     super('service-web')
@@ -47,6 +65,16 @@ class ServiceWebDB extends Dexie {
       leads: '++id, projectId, email',
       payments: 'id, projectId, status, createdAt',
       orders: 'id, projectId, status, createdAt',
+    })
+    // v3 : administration des prix.
+    this.version(3).stores({
+      projects: 'id, updatedAt',
+      versions: '++id, projectId, createdAt',
+      leads: '++id, projectId, email',
+      payments: 'id, projectId, status, createdAt',
+      orders: 'id, projectId, status, createdAt',
+      settings: 'key',
+      pricingHistory: '++id, changedAt',
     })
   }
 }
@@ -114,4 +142,25 @@ export async function listOrders(projectId?: string): Promise<Order[]> {
 
 export async function deleteVersion(id: number): Promise<void> {
   await db.versions.delete(id)
+}
+
+const PRICING_KEY = 'pricingRules'
+
+/** Regles de tarification en vigueur ; les defauts servent de repli (§38). */
+export async function loadPricingRules(): Promise<PricingRules | null> {
+  const row = await db.settings.get(PRICING_KEY)
+  return (row?.value as PricingRules) ?? null
+}
+
+export async function savePricingRules(rules: PricingRules, changes: Omit<PricingChange, 'id'>[] = []): Promise<void> {
+  await db.settings.put({ key: PRICING_KEY, value: rules })
+  if (changes.length) await db.pricingHistory.bulkAdd(changes)
+}
+
+export async function listPricingHistory(): Promise<PricingChange[]> {
+  return db.pricingHistory.orderBy('changedAt').reverse().toArray()
+}
+
+export async function deleteProject(id: string): Promise<void> {
+  await db.projects.delete(id)
 }

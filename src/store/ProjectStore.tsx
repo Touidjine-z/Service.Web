@@ -3,8 +3,8 @@ import type { Project } from '@/engine/types'
 import type { Action } from './actions'
 import { reducer } from './reducer'
 import { createEmptyProject } from '@/engine/project'
-import { computeQuote, DEFAULT_PRICING_RULES, type Quote } from '@/engine/pricing'
-import { loadLatestProject, saveProject } from './db'
+import { computeQuote, DEFAULT_PRICING_RULES, type PricingRules, type Quote } from '@/engine/pricing'
+import { loadLatestProject, loadPricingRules, saveProject } from './db'
 
 /** Actions qui ne doivent pas creer d'entree dans l'historique undo/redo. */
 const NON_UNDOABLE = new Set<Action['type']>(['load', 'setStep', 'revealPrice'])
@@ -51,6 +51,8 @@ interface ProjectContextValue {
   canRedo: boolean
   /** Devis calcule en continu, mais a ne rendre qu'apres `project.priceRevealed`. */
   quote: Quote
+  /** Regles en vigueur, chargees depuis l'administration (§38). */
+  pricingRules: PricingRules
   hydrated: boolean
   saving: boolean
 }
@@ -64,6 +66,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     future: [],
   }))
   const [hydrated, setHydrated] = useState(false)
+  const [pricingRules, setPricingRules] = useState<PricingRules>(DEFAULT_PRICING_RULES)
   const [saving, setSaving] = useState(false)
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -117,7 +120,14 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener('keydown', onKey)
   }, [undo, redo])
 
-  const quote = useMemo(() => computeQuote(state.present, DEFAULT_PRICING_RULES), [state.present])
+  // Les tarifs viennent de l'administration ; les defauts ne sont qu'un repli.
+  useEffect(() => {
+    loadPricingRules()
+      .then((rules) => { if (rules) setPricingRules(rules) })
+      .catch(() => undefined)
+  }, [])
+
+  const quote = useMemo(() => computeQuote(state.present, pricingRules), [state.present, pricingRules])
 
   const value = useMemo<ProjectContextValue>(
     () => ({
@@ -128,10 +138,11 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
       canUndo: state.past.length > 0,
       canRedo: state.future.length > 0,
       quote,
+      pricingRules,
       hydrated,
       saving,
     }),
-    [state, dispatch, undo, redo, quote, hydrated, saving],
+    [state, dispatch, undo, redo, quote, pricingRules, hydrated, saving],
   )
 
   return <ProjectContext.Provider value={value}>{children}</ProjectContext.Provider>
