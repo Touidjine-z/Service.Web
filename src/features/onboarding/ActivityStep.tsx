@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Search, Sparkles } from 'lucide-react'
+import AssistantDialog from './AssistantDialog'
 import { SECTORS, CUSTOM_ACTIVITY } from '@/engine/activities'
 import { useProject } from '@/store/ProjectStore'
 import StepLayout from '@/ui/StepLayout'
@@ -8,6 +9,7 @@ import StepLayout from '@/ui/StepLayout'
 export default function ActivityStep() {
   const { project, dispatch } = useProject()
   const [query, setQuery] = useState('')
+  const [assistantOpen, setAssistantOpen] = useState(false)
   const [customOpen, setCustomOpen] = useState(project.activityId === 'custom')
   const [customLabel, setCustomLabel] = useState(project.customActivity)
 
@@ -45,16 +47,21 @@ export default function ActivityStep() {
       canContinue={canContinue}
       hint="Sélectionnez une activité pour continuer"
     >
-      <div className="relative mb-8 max-w-md">
-        <Search size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-subtle" />
-        <input
-          type="search"
-          className="field pl-10"
-          placeholder="Rechercher une activité…"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          aria-label="Rechercher une activité"
-        />
+      <div className="mb-8 flex flex-wrap items-center gap-3">
+        <div className="relative min-w-[240px] flex-1 sm:max-w-md">
+          <Search size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-subtle" />
+          <input
+            type="search"
+            className="field pl-10"
+            placeholder="Rechercher une activité…"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            aria-label="Rechercher une activité"
+          />
+        </div>
+        <button type="button" className="btn-secondary" onClick={() => setAssistantOpen(true)}>
+          <Sparkles size={16} /> Créer automatiquement mon site
+        </button>
       </div>
 
       <div className="space-y-10">
@@ -126,6 +133,7 @@ export default function ActivityStep() {
           </div>
         )}
       </section>
+      {assistantOpen && <AssistantDialog onClose={() => setAssistantOpen(false)} />}
     </StepLayout>
   )
 }

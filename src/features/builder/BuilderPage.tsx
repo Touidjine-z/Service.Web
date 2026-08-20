@@ -1,8 +1,9 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { Suspense, lazy, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   ArrowLeft, ArrowRight, Bookmark, Check, Eye, FileText, Images, Layers, Loader2,
-  Monitor, Package, Palette, Redo2, Settings, Smartphone, Tablet, Tv, Undo2, User, Wrench,
+  Monitor, Package, Palette, QrCode, Redo2, Search, Settings, Smartphone, Tablet, Tv,
+  Undo2, User, Wrench,
 } from 'lucide-react'
 import type { ModuleId, Viewport } from '@/engine/types'
 import SiteRenderer from '@/renderer/SiteRenderer'
@@ -14,10 +15,14 @@ import SectionsPanel from './SectionsPanel'
 import IdentityPanel from './IdentityPanel'
 import CatalogPanel from './CatalogPanel'
 import SettingsPanel from './SettingsPanel'
+import SeoPanel from './SeoPanel'
+
+/** La generation de QR embarque sa propre librairie : chargee a la demande. */
+const QrPanel = lazy(() => import('./QrPanel'))
 import PropertiesPanel from './PropertiesPanel'
 import SaveProjectDialog from '@/features/final/SaveProjectDialog'
 
-type Tab = 'pages' | 'sections' | 'products' | 'services' | 'gallery' | 'identity' | 'settings'
+type Tab = 'pages' | 'sections' | 'products' | 'services' | 'gallery' | 'identity' | 'seo' | 'qr' | 'settings'
 
 /** Onglets de la sidebar (§9). Un onglet catalogue n'apparait que si le module
  *  correspondant est actif : la sidebar reste courte pour un metier simple. */
@@ -28,6 +33,8 @@ const TABS: { id: Tab; label: string; icon: typeof Layers; requires?: ModuleId[]
   { id: 'services', label: 'Services', icon: Wrench, requires: ['services'] },
   { id: 'gallery', label: 'Galerie', icon: Images, requires: ['gallery', 'portfolio'] },
   { id: 'identity', label: 'Informations', icon: User },
+  { id: 'seo', label: 'Référencement', icon: Search },
+  { id: 'qr', label: 'QR Code', icon: QrCode },
   { id: 'settings', label: 'Paramètres', icon: Settings },
 ]
 
@@ -160,6 +167,12 @@ export default function BuilderPage() {
               {tab === 'services' && <CatalogPanel catalog="services" />}
               {tab === 'gallery' && <CatalogPanel catalog="gallery" />}
               {tab === 'identity' && <IdentityPanel />}
+              {tab === 'seo' && <SeoPanel pageId={page.id} />}
+              {tab === 'qr' && (
+                <Suspense fallback={<p className="p-4 text-xs text-subtle">Chargement…</p>}>
+                  <QrPanel />
+                </Suspense>
+              )}
               {tab === 'settings' && <SettingsPanel />}
             </div>
           </div>
@@ -203,6 +216,11 @@ export default function BuilderPage() {
                 {project.lead ? <Check size={14} /> : <Bookmark size={14} />}
                 {project.lead ? 'Projet enregistré' : 'Enregistrer mon projet'}
               </button>
+              {project.modules.includes('tv') && (
+                <button type="button" className="btn-ghost !py-2 text-xs" onClick={() => navigate('/tv')}>
+                  <Tv size={14} /> Écran TV
+                </button>
+              )}
               <button type="button" className="btn-secondary !py-2 text-xs" onClick={() => navigate('/apercu')}>
                 <Eye size={14} /> Mode visiteur
               </button>

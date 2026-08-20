@@ -1,3 +1,4 @@
+import { Suspense, lazy } from 'react'
 import { HashRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { ProjectProvider } from '@/store/ProjectStore'
 import LandingPage from '@/features/landing/LandingPage'
@@ -11,12 +12,20 @@ import VisitorPage from '@/features/preview/VisitorPage'
 import FinalPage from '@/features/final/FinalPage'
 import CheckoutPage from '@/features/final/CheckoutPage'
 import ConfirmationPage from '@/features/final/ConfirmationPage'
-import AdminPage from '@/features/admin/AdminPage'
+
+
+/**
+ * L'administration et l'ecran TV ne servent pas au parcours client : les
+ * charger a la demande evite d'alourdir la premiere page (§51).
+ */
+const AdminPage = lazy(() => import('@/features/admin/AdminPage'))
+const TvPage = lazy(() => import('@/features/tv/TvPage'))
 
 export default function App() {
   return (
     <ProjectProvider>
       <HashRouter>
+        <Suspense fallback={<div className="grid min-h-screen place-items-center text-sm text-muted">Chargement…</div>}>
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/creer/activite" element={<ActivityStep />} />
@@ -29,9 +38,11 @@ export default function App() {
           <Route path="/creer/final" element={<FinalPage />} />
           <Route path="/paiement" element={<CheckoutPage />} />
           <Route path="/confirmation" element={<ConfirmationPage />} />
+          <Route path="/tv" element={<TvPage />} />
           <Route path="/admin" element={<AdminPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        </Suspense>
       </HashRouter>
     </ProjectProvider>
   )

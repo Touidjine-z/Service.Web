@@ -1,9 +1,10 @@
 import { useState } from 'react'
-import { Eye, EyeOff, Image as ImageIcon, Trash2 } from 'lucide-react'
+import { Eye, EyeOff, Image as ImageIcon, Sparkles, Trash2 } from 'lucide-react'
 import type { Page, Section } from '@/engine/types'
 import { SECTION_DEFS, resolveProps, type FieldDef } from '@/renderer/sectionDefs'
 import { useProject } from '@/store/ProjectStore'
 import MediaPicker from './MediaPicker'
+import { analyzeLocally, improveText, makeFaq } from '@/engine/assistant'
 
 /**
  * Panneau de droite (§9). Il est entierement genere a partir du catalogue de
@@ -85,7 +86,19 @@ export default function PropertiesPanel({ page, section }: { page: Page; section
 
       <div className="mt-5 space-y-4">
         {def.fields.map((field) => (
-          <FieldControl key={field.key} field={field} value={values[field.key]} onChange={(v) => patch(field.key, v)} />
+          <FieldControl
+            key={field.key}
+            field={field}
+            value={values[field.key]}
+            onChange={(v) => patch(field.key, v)}
+            onGenerate={
+              field.key === 'items' && section!.kind === 'faq'
+                ? () => patch('items', makeFaq(analyzeLocally(
+                    `${project.identity.businessName} ${project.identity.city}`,
+                  )))
+                : undefined
+            }
+          />
         ))}
       </div>
     </div>
@@ -113,7 +126,13 @@ function ImageField({ label, value, onChange }: { label: string; value: string; 
   )
 }
 
-function FieldControl({ field, value, onChange }: { field: FieldDef; value: unknown; onChange: (v: unknown) => void }) {
+function FieldControl({ field, value, onChange, onGenerate }: {
+  field: FieldDef
+  value: unknown
+  onChange: (v: unknown) => void
+  /** Proposition automatique, quand le champ s'y prete (§39). */
+  onGenerate?: () => void
+}) {
   if (field.type === 'boolean') {
     return (
       <label className="flex items-center justify-between gap-3 text-xs font-medium text-muted">
@@ -166,7 +185,14 @@ function FieldControl({ field, value, onChange }: { field: FieldDef; value: unkn
     const items = Array.isArray(value) ? (value as Record<string, unknown>[]) : []
     return (
       <div>
-        <p className="label">{field.label}</p>
+        <div className="flex items-center justify-between">
+          <p className="label">{field.label}</p>
+          {onGenerate && (
+            <button type="button" className="mb-1.5 flex items-center gap-1 text-[11px] font-semibold text-brand hover:underline" onClick={onGenerate}>
+              <Sparkles size={11} /> Proposer
+            </button>
+          )}
+        </div>
         <div className="space-y-3">
           {items.map((item, index) => (
             <div key={index} className="rounded-xl border border-line bg-canvas p-3">
@@ -213,12 +239,23 @@ function FieldControl({ field, value, onChange }: { field: FieldDef; value: unkn
     <label className="block text-xs font-medium text-muted">
       {field.label}
       {field.type === 'textarea' ? (
-        <textarea
-          className="field mt-1 min-h-[92px]"
-          value={String(value ?? '')}
-          placeholder={field.placeholder}
-          onChange={(e) => onChange(e.target.value)}
-        />
+        <>
+          <textarea
+            className="field mt-1 min-h-[92px]"
+            value={String(value ?? '')}
+            placeholder={field.placeholder}
+            onChange={(e) => onChange(e.target.value)}
+          />
+          {String(value ?? '').trim().length > 10 && (
+            <button
+              type="button"
+              className="mt-1 flex items-center gap-1 text-[11px] font-semibold text-brand hover:underline"
+              onClick={() => onChange(improveText(String(value ?? '')))}
+            >
+              <Sparkles size={11} /> Améliorer ce texte
+            </button>
+          )}
+        </>
       ) : (
         <input
           className="field mt-1"
