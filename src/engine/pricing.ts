@@ -43,6 +43,12 @@ export interface PricingRules {
   depositRate: number
   depositMinimum: number
   currency: string
+  /**
+   * Travail humain facture a l'unite AU-DELA du quota de la formule (§60).
+   * Les quotas eux-memes vivent dans `plans.ts`, qui n'a pas le droit de
+   * connaitre un montant.
+   */
+  servicePrices?: { writtenPage: number; stockImage: number }
   /** Tarif par formule (§60). ABSENT des regles enregistrees avant cette option. */
   plans?: Record<PlanId, PlanPricing>
 }
@@ -53,70 +59,75 @@ export const DEFAULT_PRICING_RULES: PricingRules = {
   includedPages: 5,
   pricePerExtraPage: 50,
   modulePrices: {
-    cart: 120,
-    order: 150,
-    ordermodes: 70,
-    formulas: 40,
-    offers: 40,
-    venues: 90,
-    allergens: 40,
-    loyalty: 60,
-    finder: 80,
-    program: 40,
-    funding: 30,
-    booking: 120,
-    quote: 60,
-    gallery: 40,
-    portfolio: 60,
-    products: 60,
-    menu: 60,
-    testimonials: 30,
-    faq: 30,
-    pricing: 30,
-    tv: 50,
-    qrcode: 50,
-    social: 20,
-    location: 30,
-    hours: 20,
-    categories: 30,
+    cart: 240,
+    order: 300,
+    ordermodes: 140,
+    formulas: 80,
+    offers: 80,
+    venues: 180,
+    allergens: 80,
+    loyalty: 120,
+    finder: 160,
+    program: 80,
+    funding: 60,
+    booking: 240,
+    quote: 120,
+    gallery: 80,
+    portfolio: 120,
+    products: 120,
+    menu: 120,
+    testimonials: 60,
+    faq: 60,
+    pricing: 60,
+    tv: 100,
+    qrcode: 100,
+    social: 40,
+    location: 60,
+    hours: 40,
+    categories: 60,
     about: 0,
-    services: 40,
+    services: 80,
     contact: 0,
-    stats: 30,
-    process: 30,
-    team: 40,
-    logos: 30,
-    beforeafter: 60,
-    banner: 20,
-    video: 60,
-    news: 70,
-    events: 60,
-    jobs: 70,
-    documents: 40,
-    certifications: 40,
-    coverage: 40,
-    newsletter: 30,
+    stats: 60,
+    process: 60,
+    team: 80,
+    logos: 60,
+    beforeafter: 120,
+    banner: 40,
+    video: 120,
+    news: 140,
+    events: 120,
+    jobs: 140,
+    documents: 80,
+    certifications: 80,
+    coverage: 80,
+    newsletter: 60,
   },
   catalogTiers: [
     { upTo: 20, price: 0 },
-    { upTo: 60, price: 80 },
-    { upTo: 150, price: 180 },
-    { upTo: Number.POSITIVE_INFINITY, price: 320 },
+    { upTo: 60, price: 160 },
+    { upTo: 150, price: 360 },
+    { upTo: Number.POSITIVE_INFINITY, price: 640 },
   ],
-  customThemeSurcharge: 80,
+  customThemeSurcharge: 160,
   domainSetupFee: 30,
   depositRate: 0.1,
   depositMinimum: 50,
   currency: 'EUR',
+  servicePrices: { writtenPage: 60, stockImage: 15 },
   plans: {
-    // Le sur-mesure reprend au centime les valeurs d'avant les formules : aucun
-    // devis deja sorti ne bouge.
-    website: { basePrice: 400, includedPages: 5, pricePerExtraPage: 50, moduleRate: 1 },
-    // Le modele : une base plus basse, et un module assemble sur un site type
-    // coute la moitie d'un module construit. `includedPages` colle au plafond de
-    // la formule (6) et `pricePerExtraPage` a 0 : aucune ligne « pages
-    // supplementaires » ne peut apparaitre sur un devis modele.
-    template: { basePrice: 250, includedPages: 6, pricePerExtraPage: 0, moduleRate: 0.5 },
+    // Le modele : `includedPages` colle au plafond de la formule (6) et
+    // `pricePerExtraPage` vaut 0, donc aucune ligne « pages supplementaires » ne
+    // peut apparaitre sur un devis modele. Un module assemble sur un site type
+    // coute la moitie d'un module construit — c'est la phrase a dire au client,
+    // et elle est vraie.
+    template: { basePrice: 550, includedPages: 6, pricePerExtraPage: 0, moduleRate: 0.5 },
+    website: { basePrice: 1100, includedPages: 10, pricePerExtraPage: 90, moduleRate: 1 },
+    // Le cle en main n'ouvre aucun logiciel de plus : sa base paie le travail
+    // humain — redaction, images, liens entrants — que les quotas de `plans.ts`
+    // decrivent. L'ecart de base est calibre pour que sa bande ne recouvre pas
+    // celle du sur-mesure, meme sur un projet charge de modules.
+    turnkey: { basePrice: 2800, includedPages: 20, pricePerExtraPage: 90, moduleRate: 1 },
   },
 }
 
@@ -140,10 +151,26 @@ export function planPricing(rules: PricingRules, plan: PlanId): PlanPricing {
   return DEFAULT_PRICING_RULES.plans![plan]
 }
 
+/**
+ * Famille d'une ligne de devis. Neuf lignes a la file se lisent mal : groupees,
+ * elles disent ce que le client ACHETE et plus seulement ce qu'il paie. C'est le
+ * moteur qui range, parce que c'est lui qui sait ce qu'est chaque ligne.
+ */
+export type PriceGroup = 'base' | 'features' | 'content' | 'human'
+
+export const PRICE_GROUPS: { id: PriceGroup; label: string }[] = [
+  { id: 'base', label: 'Votre formule' },
+  { id: 'features', label: 'Fonctionnalités' },
+  { id: 'content', label: 'Votre contenu' },
+  { id: 'human', label: 'Notre travail' },
+]
+
 export interface PriceLine {
   label: string
   detail?: string
   amount: number
+  /** Absente sur les devis calcules avant le regroupement : traitee comme 'base'. */
+  group?: PriceGroup
 }
 
 export interface Quote {
@@ -165,7 +192,7 @@ export function computeQuote(project: Project, rules: PricingRules = DEFAULT_PRI
   const plan = planDefOf(project)
   const p = planPricing(rules, plan.id)
 
-  lines.push({ label: plan.label, detail: `Base, ${p.includedPages} pages incluses`, amount: p.basePrice })
+  lines.push({ label: plan.label, detail: `Base, ${p.includedPages} pages incluses`, amount: p.basePrice, group: 'base' })
 
   const extraPages = Math.max(0, project.pages.length - p.includedPages)
   if (extraPages > 0 && p.pricePerExtraPage > 0) {
@@ -173,24 +200,51 @@ export function computeQuote(project: Project, rules: PricingRules = DEFAULT_PRI
       label: 'Pages supplémentaires',
       detail: `${extraPages} × ${p.pricePerExtraPage} ${rules.currency === 'EUR' ? '€' : rules.currency}`,
       amount: extraPages * p.pricePerExtraPage,
+      group: 'base',
     })
   }
 
   for (const moduleId of project.modules) {
     const price = Math.round((rules.modulePrices[moduleId] ?? 0) * p.moduleRate)
     if (price > 0) {
-      lines.push({ label: moduleLabel(moduleId), amount: price })
+      lines.push({ label: moduleLabel(moduleId), amount: price, group: 'features' })
     }
   }
 
   const catalogSize = project.products.length + project.services.length + project.gallery.length
   const tier = rules.catalogTiers.find((t) => catalogSize <= t.upTo)
   if (tier && tier.price > 0) {
-    lines.push({ label: 'Intégration du catalogue', detail: `${catalogSize} éléments`, amount: tier.price })
+    lines.push({ label: 'Intégration du catalogue', detail: `${catalogSize} éléments`, amount: tier.price, group: 'content' })
+  }
+
+  // Travail humain (§60). Le quota de la formule est inclus ; on ne facture que
+  // ce qui le depasse, et seulement ce que le projet demande reellement — le
+  // nombre de pages ecrites, le nombre d'images distinctes a acheter.
+  const services = plan.services
+  const prices = rules.servicePrices ?? DEFAULT_PRICING_RULES.servicePrices!
+
+  const extraPagesToWrite = Math.max(0, project.pages.length - services.writtenPages)
+  if (extraPagesToWrite > 0 && prices.writtenPage > 0) {
+    lines.push({
+      label: 'Rédaction de pages',
+      detail: `${extraPagesToWrite} au-delà des ${services.writtenPages} incluses`,
+      amount: extraPagesToWrite * prices.writtenPage,
+      group: 'human',
+    })
+  }
+
+  const extraImages = Math.max(0, illustrationCount(project) - services.stockImages)
+  if (extraImages > 0 && prices.stockImage > 0) {
+    lines.push({
+      label: "Images d'illustration",
+      detail: `${extraImages} au-delà des ${services.stockImages} incluses`,
+      amount: extraImages * prices.stockImage,
+      group: 'human',
+    })
   }
 
   if (project.themeId === 'custom') {
-    lines.push({ label: 'Design sur mesure', amount: rules.customThemeSurcharge })
+    lines.push({ label: 'Design sur mesure', amount: rules.customThemeSurcharge, group: 'human' })
   }
 
   // Nom de domaine (§59). Seul notre travail — reservation, configuration DNS,
@@ -199,12 +253,45 @@ export function computeQuote(project: Project, rules: PricingRules = DEFAULT_PRI
   // `?? DEFAULT` : les regles enregistrees avant cette option n'ont pas le champ.
   const domainFee = rules.domainSetupFee ?? DEFAULT_PRICING_RULES.domainSetupFee
   if (project.domain?.status === 'wanted' && project.domain.name && domainFee > 0) {
-    lines.push({ label: 'Nom de domaine', detail: `${project.domain.name} — réservation et configuration`, amount: domainFee })
+    lines.push({ label: 'Nom de domaine', detail: `${project.domain.name} — réservation et configuration`, amount: domainFee, group: 'human' })
   }
 
   const total = lines.reduce((sum, l) => sum + l.amount, 0)
   const deposit = computeDeposit(total, rules)
   return { lines, total, deposit, balance: total - deposit, currency: rules.currency }
+}
+
+/** Devis range par famille, dans l'ordre de PRICE_GROUPS, sans famille vide. */
+export function groupQuote(quote: Quote): { id: PriceGroup; label: string; lines: PriceLine[]; subtotal: number }[] {
+  return PRICE_GROUPS
+    .map((g) => {
+      const lines = quote.lines.filter((l) => (l.group ?? 'base') === g.id)
+      return { ...g, lines, subtotal: lines.reduce((sum, l) => sum + l.amount, 0) }
+    })
+    .filter((g) => g.lines.length > 0)
+}
+
+/**
+ * Images d'illustration que le projet demande reellement. On compte des URL
+ * DISTINCTES : une meme photo posee sur deux pages ne s'achete qu'une fois.
+ */
+function illustrationCount(project: Project): number {
+  const used = new Set<string>()
+  const add = (value: unknown) => {
+    if (typeof value === 'string' && value.trim()) used.add(value)
+  }
+
+  add(project.identity.logoUrl)
+  project.gallery.forEach((item) => add(item.imageUrl))
+  project.products.forEach((item) => add(item.imageUrl))
+  project.services.forEach((item) => add(item.imageUrl))
+  for (const page of project.pages) {
+    for (const section of page.sections) {
+      add(section.props.imageUrl)
+      for (const block of section.blocks ?? []) add(block.props.imageUrl)
+    }
+  }
+  return used.size
 }
 
 const MODULE_LABELS: Partial<Record<ModuleId, string>> = {

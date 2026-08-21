@@ -1,9 +1,13 @@
 import puppeteer from 'puppeteer-core'
-const OUT = process.argv[2] || '.'
+import { mkdirSync } from 'node:fs'
+// Par defaut, les captures sortent DU depot : `npm run smoke` ne passe aucun
+// argument, et le dossier courant est la racine du projet.
+const OUT = process.argv[2] || process.env.SHOTS || '/tmp/studio-captures'
+mkdirSync(OUT, { recursive: true })
 const errors = []
 const step = (m) => console.log('  …', m)
 
-const b = await puppeteer.launch({ executablePath: '/usr/bin/google-chrome', headless: 'new', args: ['--no-sandbox'] })
+const b = await puppeteer.launch({ executablePath: '/usr/bin/google-chrome', headless: 'new', args: ['--no-sandbox', '--disable-gpu'] })
 const page = await b.newPage()
 await page.setViewport({ width: 1500, height: 1000 })
 page.on('pageerror', (e) => errors.push(`pageerror: ${e.message}`))

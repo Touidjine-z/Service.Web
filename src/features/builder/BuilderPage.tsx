@@ -37,15 +37,17 @@ const TABS: { id: Tab; label: string; icon: typeof Layers; requires?: ModuleId[]
   { id: 'gallery', label: 'Galerie', icon: Images, requires: ['gallery', 'portfolio'] },
   { id: 'identity', label: 'Informations', icon: User },
   { id: 'seo', label: 'Référencement', icon: Search },
-  { id: 'qr', label: 'QR Code', icon: QrCode },
+  { id: 'qr', label: 'QR Code', icon: QrCode, requires: ['qrcode'] },
   { id: 'settings', label: 'Paramètres', icon: Settings },
 ]
 
-const VIEWPORTS: { id: Viewport; label: string; icon: typeof Monitor }[] = [
+/** Formats d'apercu. Comme les onglets, un format peut dependre d'un module :
+ *  l'apercu TV ne veut rien dire tant que l'ecran de salle n'est pas au projet. */
+const VIEWPORTS: { id: Viewport; label: string; icon: typeof Monitor; requires?: ModuleId[] }[] = [
   { id: 'desktop', label: 'Ordinateur', icon: Monitor },
   { id: 'tablet', label: 'Tablette', icon: Tablet },
   { id: 'mobile', label: 'Mobile', icon: Smartphone },
-  { id: 'tv', label: 'TV', icon: Tv },
+  { id: 'tv', label: 'TV', icon: Tv, requires: ['tv'] },
 ]
 
 /**
@@ -58,6 +60,10 @@ export default function BuilderPage() {
 
   const tabs = useMemo(
     () => TABS.filter((t) => !t.requires || t.requires.some((m) => project.modules.includes(m))),
+    [project.modules],
+  )
+  const viewports = useMemo(
+    () => VIEWPORTS.filter((v) => !v.requires || v.requires.some((m) => project.modules.includes(m))),
     [project.modules],
   )
   const [tab, setTab] = useState<Tab>('sections')
@@ -77,6 +83,11 @@ export default function BuilderPage() {
   useEffect(() => {
     if (!tabs.some((t) => t.id === tab)) setTab('sections')
   }, [tabs, tab])
+
+  // Meme raison pour le format d'apercu : on retombe sur l'ordinateur.
+  useEffect(() => {
+    if (!viewports.some((v) => v.id === viewport)) setViewport('desktop')
+  }, [viewports, viewport])
 
   const page = useMemo(
     () => project.pages.find((p) => p.id === pageId) ?? project.pages[0],
@@ -222,7 +233,7 @@ export default function BuilderPage() {
             </div>
 
             <div className="flex items-center gap-1 rounded-xl bg-canvas p-1">
-              {VIEWPORTS.map(({ id, label, icon: Icon }) => (
+              {viewports.map(({ id, label, icon: Icon }) => (
                 <button
                   key={id}
                   type="button"

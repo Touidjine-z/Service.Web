@@ -1,6 +1,7 @@
 import Dexie, { type Table } from 'dexie'
 import type { Project, Lead, Order, Payment } from '@/engine/types'
 import { DEFAULT_PRICING_RULES, type PricingRules } from '@/engine/pricing'
+import { DEFAULT_PLAN_ID } from '@/engine/plans'
 
 /**
  * Persistance locale. Le client construit gratuitement, sans compte ni
@@ -162,12 +163,31 @@ export async function loadPricingRules(): Promise<PricingRules | null> {
   return mergePricingRules(stored)
 }
 
-/** Regles stockees completees par les defauts, formule par formule. */
+/**
+ * Regles stockees completees par les defauts, formule par formule.
+ *
+ * Le piege : des regles enregistrees AVANT les formules n'ont pas de cle
+ * `plans`, mais leurs montants historiques SONT ceux du sur-mesure. Les
+ * remplacer par les valeurs d'usine ferait reapparaitre 400 € chez un
+ * administrateur qui avait porte sa base a 450 — et le ferait au moment precis
+ * ou un client decouvre son prix. On amorce donc la formule par defaut avec ces
+ * montants, et les formules reellement enregistrees gagnent toujours.
+ */
 export function mergePricingRules(stored: PricingRules): PricingRules {
+  const legacy = typeof stored.basePrice === 'number'
+    ? {
+        [DEFAULT_PLAN_ID]: {
+          basePrice: stored.basePrice,
+          includedPages: stored.includedPages,
+          pricePerExtraPage: stored.pricePerExtraPage,
+          moduleRate: 1,
+        },
+      }
+    : null
   return {
     ...DEFAULT_PRICING_RULES,
     ...stored,
-    plans: { ...DEFAULT_PRICING_RULES.plans!, ...stored.plans },
+    plans: { ...DEFAULT_PRICING_RULES.plans!, ...legacy, ...stored.plans },
   }
 }
 

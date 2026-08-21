@@ -11,23 +11,23 @@ vers ses sections.
 
 ## 1. Le tunnel, en une phrase
 
-Un professionnel arrive sur la landing, choisit son métier, dit ce qu'il veut
-obtenir, ajuste ses fonctionnalités, choisit un design et ses couleurs,
-construit ses pages, ajoute son contenu, puis parcourt son site comme un vrai
-visiteur. **À aucun moment il ne voit le prix de réalisation.**
+Un professionnel arrive sur la landing, choisit son métier, choisit sa formule,
+dit ce qu'il veut obtenir, ajuste ses fonctionnalités, choisit un design et ses
+couleurs, construit ses pages, ajoute son contenu, puis parcourt son site comme
+un vrai visiteur. **À aucun moment il ne voit le prix de réalisation.**
 
 ```
-Landing → Activité → Objectifs → Fonctionnalités → Thème → Couleurs
+Landing → Activité → Formule → Objectifs → Fonctionnalités → Thème → Couleurs
         → Builder (pages, sections, contenu) → Mode visiteur
         → Page finale → Révélation du prix → Nom de domaine → Acompte → Paiement
         → Administration (projets, leads, paiements, tarification)
 ```
 
-Une barre de progression en 7 étapes (Activité, Objectifs, Fonctionnalités,
-Design, Contenu, Aperçu, Finalisation) suit le client sur tout le parcours. Elle
-ne contient aucune information tarifaire (§49, §56).
+Une barre de progression en 8 étapes (Activité, Formule, Objectifs,
+Fonctionnalités, Design, Contenu, Aperçu, Finalisation) suit le client sur tout
+le parcours. Elle ne contient aucune information tarifaire (§49, §56).
 
-Deux raccourcis mènent au même builder pour qui ne veut pas dérouler les cinq
+Deux raccourcis mènent au même builder pour qui ne veut pas dérouler les six
 étapes : l'**assistant en une phrase** (§39) et le **formulaire express**
 `/creer/express`, qui monte le site d'un coup à partir des informations de
 l'établissement.
@@ -35,6 +35,19 @@ l'établissement.
 ---
 
 ## 2. Les écrans
+
+**La largeur suit l'écran.** Les pages de la plateforme étaient bloquées à
+1 152 px : sur un écran large, tout tenait dans une bande centrale. Le conteneur
+grandit maintenant par paliers — plein écran jusqu'à 2 560 px, puis centré — et
+les grilles gagnent des colonnes au lieu d'étirer leurs cartes : 4 métiers par
+ligne à 1 366 px, 6 à 1 920, 7 au-delà. Les blocs de texte, eux, gardent leur
+largeur de lecture : une phrase de 1 600 px ne se lit pas.
+
+**La barre d'actions ne recouvre plus rien.** « Retour / Projet enregistré /
+Continuer » était collée en bas de la fenêtre et passait par-dessus le contenu —
+six vignettes à l'étape Design, trois blocs à l'étape Couleurs. Elle est repassée
+dans le flux, sous une colonne flex : sur une étape courte elle se pose au bas de
+l'écran, sur une étape longue elle attend la fin du contenu.
 
 ### 2.1 Vitrine — `/`
 
@@ -49,7 +62,7 @@ de promettre. De haut en bas :
 | Bandeau métiers | Les 31 activités défilent en continu |
 | Chiffres | Designs, métiers, sections, fonctionnalités — comptés à l'écran, lus dans le moteur |
 | Méthode | Les cinq étapes du parcours, en cartes avec lueur au survol |
-| Designs | Galerie filtrable des 32 thèmes, vraies vignettes, clic = démarrage avec ce design |
+| Designs | Galerie filtrable des 34 thèmes, vraies vignettes, clic = démarrage avec ce design |
 | Différence | Comparaison frontale avec un site monté à la va-vite |
 | Métiers | Recherche instantanée : le visiteur entre dans le parcours depuis la vitrine |
 | Avis | Rail de témoignages avec notes |
@@ -101,7 +114,7 @@ propres au métier** (§3.3 ter).
 ### 2.2 bis Création express — `/creer/express` (§39)
 
 Une porte d'entrée parallèle, pour le professionnel qui ne veut pas parcourir
-les cinq étapes : **il remplit un formulaire, il valide, son site est monté.**
+les six étapes : **il remplit un formulaire, il valide, son site est monté.**
 
 Le formulaire demande son activité (les 31 métiers ou la saisie libre), le nom
 de sa boutique, un slogan éventuel, ses coordonnées — téléphone, email, adresse,
@@ -126,10 +139,104 @@ slogan, présentation et FAQ rédigés depuis les informations saisies,
 référencement de chaque page. Un écran de confirmation annonce « Le site de X
 est prêt » et propose de le **voir** comme un visiteur ou de le **modifier**.
 
+Un raccourci n'impose aucune formule : le projet démarre dans la formule par
+défaut, le **site sur mesure** (§60). L'écran de confirmation renvoie d'ailleurs
+vers l'étape **Formule** et non vers le builder — le chemin le plus rapide ne
+doit pas rendre le site modèle inatteignable. L'assistant en une phrase et le
+chat de la vitrine, eux, entrent plus loin dans le parcours : la formule se
+change alors depuis l'onglet Paramètres du builder.
+
 Ce qui n'est volontairement **pas** figé : le titre du hero, les titres de
 sections et le pied de page continuent de se déduire de l'identité. Renommer sa
 boutique met donc tout le site à jour, sans repasser par ce formulaire — qui se
 rouvre d'ailleurs pré-rempli avec ce que le projet sait déjà.
+
+### 2.2 ter Formule — `/creer/formule` (§60)
+
+**Trois façons de faire son site**, choisies juste après le métier — donc avant
+de construire quoi que ce soit. Le client construit ainsi d'emblée dans le bon
+périmètre, au lieu de construire puis d'être amputé.
+
+L'échelle ne porte **pas sur la quantité de logiciel** — le moteur est le même
+pour les trois — mais sur **qui fait le travail**.
+
+| Formule | Pour qui | Ce qu'elle contient | Qui fait le travail |
+| --- | --- | --- | --- |
+| **Site modèle** | Être trouvé, montrer ce qu'on fait, être appelé | Le site type du métier, monté avec ses textes, ses photos et ses couleurs | Le client part d'un site type et écrit ; nous réalisons |
+| **Site sur mesure** | Vendre, prendre des commandes ou des rendez-vous | Le moteur entier : commande, rendez-vous, devis, pages et catalogue illimités | Nous dessinons ; le client fournit le contenu |
+| **Site clé en main** | Ne pas avoir à rédiger, être trouvé sur Google dès le départ | Le même moteur que le sur mesure, aux mêmes limites | Nous dessinons **et** nous rédigeons ; le client n'a rien à fournir |
+
+**Le clé en main n'ouvre aucune fonctionnalité de plus que le sur mesure** : ses
+modules et ses plafonds sont identiques, ligne pour ligne. Ce qui l'en distingue,
+ce sont les **services**, c'est-à-dire le travail humain que la formule comprend.
+
+L'écran (« De quoi avez-vous besoin ? ») rend les **trois cartes** telles que le
+catalogue `engine/plans.ts` les déclare : **pastille** (« Le plus simple », « Le
+plus choisi », « Le plus complet »), phrase de situation, ce que la formule
+contient, **ce que nous faisons pour vous**, ce qu'elle ne contient pas. La
+pastille vient du champ `badge` du catalogue et non de l'écran : ajouter une
+formule n'oblige donc pas à rouvrir un composant pour arbitrer laquelle porte
+quel libellé (§48). **Aucun montant** (§56) : sous les cartes, une seule phrase
+rappelle que la construction est gratuite et que le prix de réalisation sera
+montré à la fin.
+
+Le bloc **« Ce que nous faisons pour vous »** n'est pas rédigé, il est **déduit
+des quotas** de la formule — deux lignes toujours (pages rédigées, images
+d'illustration) et une troisième quand la formule pose des liens entrants.
+
+| Formule | Pages rédigées | Images d'illustration | Liens entrants |
+| --- | --- | --- | --- |
+| Site modèle | 6 | 10 | — |
+| Site sur mesure | 10 | 20 | 5 |
+| Site clé en main | 20 | 40 | 12 |
+
+Ce sont des **quantités**, jamais des montants : `PlanDef` ne déclare aucun champ
+monétaire. Changer un de ces nombres dans `plans.ts` change ensemble l'écran de
+choix, le devis et l'administration.
+
+Le **site sur mesure est la formule par défaut**, et celle de tous les projets
+enregistrés avant cette option : le défaut le plus permissif n'ampute personne.
+
+**Ce que le site modèle ferme** — seize fonctionnalités, celles par lesquelles un
+visiteur envoie de l'argent ou une donnée structurée, et celles qui demandent une
+logique métier, une donnée réglementée ou un second support : Panier, Commande,
+Modes de service, Rendez-vous, Demande de devis, Recrutement, Lettre
+d'information, Fidélité, Recherche guidée, Établissements, Allergènes, Programme,
+Financement, Avant / Après, Affichage TV, QR Code — plus le design entièrement
+sur mesure. Cinq des quatorze objectifs tombent avec elles.
+
+**Ses plafonds** : 6 pages, 20 éléments de catalogue (produits, services et
+photos **cumulés**), pas de thème « Custom ». Le site sur mesure et le site clé
+en main n'ont aucune limite : leurs plafonds sont identiques, module pour module.
+
+**Changer d'avis reste possible jusqu'à la fin** : sur cet écran, depuis l'onglet
+Paramètres du builder, sur chaque verrou rencontré en construisant, et sur la
+page finale une fois le prix révélé. Un acompte encaissé fige la formule, et
+l'écran le dit.
+
+**Une descente ne détruit jamais de contenu.** Passer au site modèle ferme les
+modules que la formule n'ouvre pas et retire les pages qui ne contenaient *que*
+ces modules ; les unes et les autres sont **nommées** dans une confirmation avant
+d'être appliquées. Une page déjà vide *avant* le changement n'a pas été vidée par
+lui : elle reste. Textes, produits, services, photos, couleurs et identité
+restent en place. Si le projet dépasse un plafond — trop de pages, trop
+d'éléments — le changement est **refusé**, et l'écran liste ce qui bloque : c'est
+au client de supprimer, pas à nous de tronquer son travail.
+
+Cette garde existe deux fois. L'interface désactive le contrôle et explique ;
+le reducer refuse l'action de toute façon, quel que soit le chemin emprunté.
+C'est aussi lui qui porte le **gel après acompte** : un changement de formule
+est refusé dès que le projet a atteint `deposit-paid`, et les verrous s'effacent
+au lieu de proposer un bouton mort. Porté par un seul écran, il aurait suffi
+d'entrer par un autre.
+
+**Les écrans qui montrent des montants sont fermés tant que le prix n'est pas
+révélé** (§56) : `/confirmation`, `/paiement` et `/creer/domaine` renvoient vers
+la page finale quand on tape leur adresse directement — signet, historique, URL
+recopiée. `/tv` fait de même quand la formule ne contient pas l'écran TV, en
+expliquant et en proposant la montée plutôt qu'en opposant un mur. Le scénario
+`formules.mjs` visite ces adresses avec un projet non révélé et échoue si un
+chiffre suivi d'un euro y apparaît.
 
 ### 2.3 Objectifs — `/creer/objectifs` (§7)
 
@@ -142,6 +249,11 @@ Chaque objectif **débloque des modules**. « Afficher mes tarifs » désigne le
 tarifs que le client montre à ses propres visiteurs — rien à voir avec le prix
 du site.
 
+En **site modèle**, les cinq objectifs dont la fonctionnalité fondatrice est
+fermée — devis, rendez-vous, commandes, vente de produits, promotions — restent
+affichés, grisés et **cliquables** : le clic explique la fonctionnalité et
+propose de passer au site sur mesure (§60). Caché, un objectif ne vendrait rien.
+
 ### 2.4 Fonctionnalités — `/creer/fonctionnalites` (§8)
 
 **20 modules** activables : Présentation, Services, Produits, Menu, Catégories,
@@ -152,9 +264,15 @@ TV, QR Code.
 Le module Contact est structurel et ne peut pas être retiré. Retirer un module
 retire aussi les sections qu'il portait, sur toutes les pages.
 
+En **site modèle**, les modules fermés quittent les listes « recommandées » et
+« autres » — mélangés aux modules actifs, ils ne seraient que des cases mortes —
+pour un bloc à part, en bas de page : **« Disponibles avec le site sur mesure »**
+(§60). Ils gardent leur icône et leur description, et s'ouvrent sur la feuille de
+montée en gamme. Le bloc disparaît de lui-même en site sur mesure.
+
 ### 2.5 Thème — `/creer/theme` (§10)
 
-**Les 32 thèmes**, chacun présenté par une miniature fidèle qui rejoue ses vrais
+**Les 34 thèmes**, chacun présenté par une miniature fidèle qui rejoue ses vrais
 tokens :
 
 | | | |
@@ -165,11 +283,16 @@ tokens :
 | Urban — street, dense et graphique | Clean — lisible, doux, sans friction | Nature — végétal, chaleureux, artisanal |
 | Fresh — coloré, gourmand, appétissant | Vintage — rétro, papier, authentique | Professional — sobre, sérieux, efficace |
 | Bold — titres énormes, impact immédiat | Glass — transparences et profondeur | Editorial — magazine, colonnes, lecture |
-| Dynamic — mouvement, diagonales, énergie | Custom — base neutre à personnaliser | |
+| Dynamic — mouvement, diagonales, énergie | Agence — bleu franc, blocs alternés, offre en avant | Repère — vert net, vignettes encadrées |
+| Custom — base neutre à personnaliser | | |
 
 Changer de thème applique par défaut la palette de ce thème. Une case
 **« Conserver mes couleurs en changeant de thème »** permet de garder la palette
 déjà personnalisée.
+
+Un seul thème dépend de la formule : **Custom**, la base neutre que l'on dessine
+soi-même. En site modèle, sa vignette reste visible, estompée et verrouillée —
+« Le design entièrement sur mesure fait partie du site sur mesure » (§60).
 
 ### 2.6 Couleurs — `/creer/couleurs` (§11)
 
@@ -187,7 +310,11 @@ Trois zones : rail d'onglets à gauche, **aperçu en direct** au centre, panneau
 propriétés à droite.
 
 Les onglets du rail s'adaptent aux modules actifs — un métier simple n'a pas
-d'onglet Produits.
+d'onglet Produits. C'est ce qui rend les formules (§60) transitives : l'onglet
+**QR Code** demande le module QR Code, exactement comme le format d'aperçu **TV**
+demande l'écran TV. En site modèle, où ces deux modules sont fermés, l'onglet et
+le format disparaissent d'eux-mêmes, sans qu'un seul écran ait à connaître la
+formule.
 
 #### Pages (§13)
 
@@ -195,6 +322,11 @@ Ajouter, renommer, dupliquer, déplacer, supprimer, définir comme page d'accuei
 Les slugs restent uniques automatiquement ; la page d'accueil garde toujours un
 slug vide. Le panneau de droite édite aussi le titre et la description pour les
 moteurs de recherche.
+
+En **site modèle**, le plafond de la formule est atteint à la sixième page : le
+champ et le bouton d'ajout se désactivent, et un bandeau dit pourquoi —
+« 6 pages — le site sur mesure n'a pas de limite. » — avec le passage à l'autre
+formule (§60). Le nombre vient du catalogue, pas du composant.
 
 #### Sections (§14)
 
@@ -230,6 +362,11 @@ Nom, description, image, durée, prix éventuel. Mêmes actions que les produits
 
 Images avec titre, description et catégorie, réorganisables.
 
+En **site modèle**, produits, services et galerie tirent sur la **même réserve**
+de 20 éléments. Un compteur « n / 20 » s'affiche en tête des trois panneaux, le
+bouton d'ajout se désactive une fois la réserve épuisée, et le bandeau propose la
+formule sans limite (§60). En site sur mesure, ni compteur ni plafond.
+
 #### Informations (§12)
 
 Nom de l'entreprise, slogan, logo (import de fichier), téléphone, email, adresse,
@@ -238,6 +375,8 @@ et cinq réseaux sociaux. Tout se répercute immédiatement dans l'aperçu.
 
 #### Paramètres (§19, §20)
 
+- **Votre formule** (§60) : son nom, sa phrase de présentation, et
+  **« Changer de formule »** qui ramène à `/creer/formule`. Aucun montant.
 - **Devise** : EUR, USD, GBP, CHF, CAD.
 - **Afficher les prix** sur le site du client : ON/OFF, pour ceux qui préfèrent
   « sur devis ».
@@ -267,9 +406,11 @@ directes : masquer la section, la supprimer.
 ### 2.8 Aperçu responsive (§21, §23, §24)
 
 Quatre supports, aux vraies largeurs : **Ordinateur 1440 px, Tablette 834 px,
-Mobile 390 px, TV 1920 px**. Ce ne sont pas que des largeurs : les tailles sont
-mises à l'échelle (mobile 0,8× ; TV 1,5×) et le nombre de colonnes est plafonné
-par support — une grille de 4 colonnes passe à 3 sur tablette et à 1 sur mobile.
+Mobile 390 px, TV 1920 px** — le format TV n'apparaissant que si le module
+Affichage TV est au projet, donc jamais en site modèle (§60). Ce ne sont pas que
+des largeurs : les tailles sont mises à l'échelle (mobile 0,8× ; TV 1,5×) et le
+nombre de colonnes est plafonné par support — une grille de 4 colonnes passe à 3
+sur tablette et à 1 sur mobile.
 
 ### 2.9 Mode visiteur — `/apercu` (§22)
 
@@ -286,12 +427,50 @@ ailleurs, un écran sans le moindre prix de réalisation.
 Le seul écran du parcours où un prix de réalisation a le droit d'exister — et
 seulement après que le client a cliqué sur **« Voir le prix de réalisation »**.
 
-Avant ce clic : « Votre site est prêt », l'aperçu réel du site, et le
-récapitulatif de ce qu'il contient (pages, fonctionnalités, design, version
-mobile, responsive, produits et services). Aucun montant.
+**Deux colonnes, deux questions.** À gauche ce que le client a *fait* : la
+maquette, puis le récapitulatif de ce qu'elle contient. À droite ce qu'elle
+*coûte*. La liste tenait autrefois au-dessus du devis, à droite : sur un écran
+large, elle laissait la moitié gauche vide sous l'aperçu.
 
-Après ce clic : le détail du devis ligne par ligne, la **réalisation**,
-l'**acompte pour démarrer** et le **solde restant**.
+**L'aperçu est manipulable.** Trois onglets — ordinateur, tablette, mobile — et
+la liste des pages du site : le client change d'appareil et navigue dans sa
+maquette sans quitter la page. C'est le moment où il se projette ; une image
+figée n'y suffisait pas. Aucun composant nouveau, `SiteRenderer` savait déjà
+rendre un viewport et remonter une navigation. La vignette se dimensionne sur la
+place disponible au lieu d'un plafond fixe.
+
+Avant le clic sur « Voir le prix » : le récapitulatif — **« Formule — Site
+modèle »** en tête (§60), puis pages, fonctionnalités, design, version mobile,
+responsive, produits et services. La formule y est nommée, jamais chiffrée.
+
+Après le clic, trois choses apparaissent dans la colonne de droite.
+
+**Le sélecteur de formule.** Les trois formules en onglets, celle du projet
+marquée d'une puce. Chaque onglet recalcule le devis sur le **même projet** —
+ses pages, ses fonctionnalités, son catalogue : ce n'est pas le tarif d'un site
+type. Regarder ne change rien ; sur sa propre formule l'action est « Demander la
+réalisation », sur une autre elle devient « Passer au … ». Une montée s'applique
+directement, une descente **nomme** d'abord les modules et les pages qu'elle
+retire, et un projet qui dépasse un plafond obtient la raison du refus au lieu
+d'un clic avalé. Acompte réglé, le sélecteur compare encore mais ne change plus
+rien : le paiement a figé total, acompte et solde. Cette comparaison remplace la
+carte qui vivait en bas de colonne, hors écran — là où elle attendait d'être
+découverte, le sélecteur travaille.
+
+**Le devis, rangé par famille.** Votre formule, Fonctionnalités, Votre contenu,
+Notre travail — avec un sous-total par famille, puis la **réalisation**,
+l'**acompte pour démarrer** et le **solde restant**. Neuf lignes à la file
+disaient ce que le client paie ; quatre familles disent ce qu'il achète. C'est le
+moteur qui range : chaque ligne porte sa famille (`PriceGroup`), aucun écran ne
+la devine.
+
+**Ce qui se passe ensuite.** La frise des étapes qui suivent l'acompte — acompte
+réglé, appel sous 24 h ouvrées, réalisation, validation, mise en ligne — cochées
+au fur et à mesure que le projet avance. Elle est construite sur les statuts du
+cycle de vie (§34) : ce qu'elle annonce au client est ce que l'administration
+suivra. Dessous, **« Recevoir mon devis par email »** ouvre la même capture de
+lead que l'enregistrement du projet (§28), pour celui qui doit en parler à son
+associé avant de décider.
 
 ### 2.11 Enregistrer son projet (§28)
 
@@ -358,8 +537,12 @@ restaurant), **Vitrine** (grille de produits avec images), **Mise en avant**
 
 Quatre onglets, avec recherche.
 
-- **Projets** — client, entreprise, activité, date, prix, acompte, statut ;
-  filtres par étape du cycle de vie. Ouvrir un projet donne la vue complète
+- **Projets** — client, entreprise, activité, **formule**, date, prix, acompte,
+  statut ; filtres par étape du cycle de vie. Au-dessus du tableau, la
+  répartition par formule de la liste **affichée** — filtres et recherche
+  compris. Les projets d'avant les formules sont comptés dans celle qui les sert,
+  mais signalés à part (« avant les formules ») : personne ne les a choisis
+  (§60). Ouvrir un projet donne la vue complète
   (§35) : ce que le client a construit, ses couleurs, son logo, ses pages et
   sections, son catalogue, ses fonctionnalités, son devis, ses paiements, ses
   coordonnées, ses commandes reçues — et **« Voir la maquette »** dans les trois
@@ -368,10 +551,16 @@ Quatre onglets, avec recherche.
 - **Leads** (§36) — nom, entreprise, email, téléphone, activité, ville, date,
   prix estimé, acompte, statut.
 - **Paiements** — transaction, client, date, total, acompte, solde, statut.
-- **Tarification** (§38) — tous les montants sont éditables ici : prix de base,
-  pages incluses, page supplémentaire, design sur mesure, réservation du **nom
-  de domaine**, **prix de chaque module**, paliers de catalogue, taux et
-  minimum d'acompte. Chaque changement
+- **Tarification** (§38) — tous les montants sont éditables ici. **Une section
+  par formule** (§60), désormais trois : prix de base, pages incluses, page
+  supplémentaire et **coefficient appliqué aux modules**. Puis le **travail
+  humain** — prix d'une page rédigée et d'une image d'illustration au-delà du
+  quota, avec le rappel des quotas de chaque formule. Puis les montants communs
+  aux trois : **prix de chaque module**, paliers de catalogue, design sur mesure,
+  réservation du **nom de domaine**, taux et minimum d'acompte. Un encart
+  **« Fourchette d'un devis »** recalcule à la frappe, pour chaque formule, sa
+  bande sur les 41 métiers, sa médiane et son plafond théorique, et **nomme** les
+  formules dont les bandes se recouvriraient. Chaque changement
   est horodaté dans un historique. Les règles enregistrées pilotent réellement
   le parcours client : le devis est calculé avec elles, pas avec les valeurs
   par défaut.
@@ -394,6 +583,25 @@ Réalisations / À propos / Contact.
 
 Une section n'est rendue que si le module qui la porte est actif. Hero, Appel à
 l'action et Carte sont toujours disponibles.
+
+**La formule (§60) ne rajoute pas un maillon à cette chaîne**, elle pose un
+plafond sur un maillon qui existe déjà : les modules. Fermer un module ferme donc
+par transitivité ses sections, son onglet dans le builder et son entrée dans le
+catalogue d'ajout — tout cela s'indexe déjà sur `project.modules`. C'est ce qui
+permet à trois formules de tenir dans un fichier de données, `engine/plans.ts`,
+sans un seul composant dédié ni un seul test de formule dans un écran (§48). La
+troisième n'a coûté qu'une entrée de plus dans ce catalogue.
+
+Projeter un projet dans sa formule (`enforcePlan`) est **idempotent et non
+destructif** : cela ne touche qu'aux modules et au thème, jamais aux pages ni au
+contenu. Pour tous les projets en site sur mesure — et pour tous ceux d'avant les
+formules — c'est l'identité stricte, donc un traitement nul et un historique
+undo/redo qui ne voit rien passer.
+
+Seul un **changement explicite de formule** (`applyPlan`) a le droit de retirer
+une page, et uniquement une page hors accueil devenue vide parce que tous ses
+modules viennent d'être fermés. Elle est nommée dans la confirmation avant de
+partir.
 
 ### 3.2 Les thèmes sont des tokens, pas des composants
 
@@ -770,10 +978,14 @@ génération par IA ne demandera que de remplacer la fonction d'amorçage.
 
 ### 4.1 Le projet
 
-Un projet contient : identifiant et dates, métier, objectifs, modules, thème,
-couleurs, police, identité complète, pages et leurs sections, catégories,
-produits, services, galerie, devise, affichage des prix, réglages de grille,
-étape en cours, indicateur de révélation du prix, et le lead éventuel.
+Un projet contient : identifiant et dates, métier, **formule**, objectifs,
+modules, thème, couleurs, police, identité complète, pages et leurs sections,
+catégories, produits, services, galerie, devise, affichage des prix, réglages de
+grille, étape en cours, indicateur de révélation du prix, et le lead éventuel.
+
+La formule est **facultative** dans le modèle de données : les projets
+enregistrés avant cette option n'en portent pas, et le moteur les résout tous en
+site sur mesure (§60). Aucun projet déjà construit n'est amputé au rechargement.
 
 ### 4.2 Sauvegarde (§27)
 
@@ -806,9 +1018,51 @@ Le devis est recalculé à chaque modification et disponible via
 
 Il se compose de : un prix de base incluant un nombre de pages, un supplément par
 page additionnelle, un montant par module actif, un palier selon le volume du
-catalogue, un supplément pour le design sur mesure, et la réservation du nom de
-domaine quand le client en demande un (§59). L'acompte vaut
-`max(10 % du total, 50 €)`.
+catalogue, **le travail humain au-delà du quota de la formule**, un supplément
+pour le design sur mesure, et la réservation du nom de domaine quand le client en
+demande un (§59). L'acompte vaut `max(10 % du total, 50 €)`.
+
+**Le prix de base, les pages incluses et le prix de la page supplémentaire
+appartiennent à la formule** (§60), et sa première ligne porte le nom de la
+formule retenue. Le catalogue des modules, lui, reste **unique et partagé** :
+chaque formule n'en facture qu'une **part**, réglée par un coefficient. Deux
+tableaux de prix à tenir, ce sont deux tableaux qui divergent.
+
+**Le travail humain se facture à l'unité, et seulement au-delà du quota** (§60).
+Deux lignes peuvent apparaître :
+
+- **« Rédaction de pages »** — les pages du projet au-delà des pages rédigées que
+  la formule comprend ;
+- **« Images d'illustration »** — les images au-delà de celles que la formule
+  achète. Le compte porte sur des **URL distinctes** : logo, galerie, produits,
+  services, images de sections et de blocs forment un seul ensemble, et une même
+  photo posée sur deux pages ne s'achète qu'une fois.
+
+Les **quotas** vivent dans le catalogue des formules, les **prix unitaires** dans
+les règles de tarification : le premier n'a pas le droit de connaître le second.
+Le site modèle, lui, ne peut pas produire de ligne « pages supplémentaires » —
+ses pages incluses sont déjà son plafond, et sa page supplémentaire vaut zéro.
+
+**Les trois bandes de prix ne se recouvrent pas.** Mesurées sur les 41 métiers du
+catalogue, chacun monté avec les fonctionnalités et les pages de son modèle —
+c'est-à-dire ce qui est réellement devisé :
+
+| Formule | Bande | Médiane |
+| --- | --- | --- |
+| Site modèle | 670 – 950 € | 770 € |
+| Site sur mesure | 1 460 – 2 960 € | 1 760 € |
+| Site clé en main | 3 160 – 4 660 € | 3 460 € |
+
+Un montant suffit donc à dire quelle formule a été vendue. L'administration refait
+cette mesure à chaque frappe. Le **plafond théorique** d'une formule — toutes ses
+fonctionnalités cochées en même temps — y est affiché à part et étiqueté comme
+tel : aucun métier ne le demande, et ces plafonds se chevauchent d'une formule à
+l'autre sans que les devis réels le fassent.
+
+La dépendance ne va que dans un sens : le moteur de tarification lit le catalogue
+des formules, le catalogue des formules ignore les tarifs. C'est ce qui rend §56
+structurel plutôt que rédactionnel — un écran qui affiche les formules n'a aucun
+montant à sa portée.
 
 Le prix du domaine chez le registrar n'est **pas** dans ce total : il est
 facturé par lui, dans sa devise, et affiché à part.
@@ -829,6 +1083,9 @@ fournir : un serveur, des comptes, des noms de domaine, un compte Stripe.
   Stripe (projet, client, total, acompte, solde, date, transaction, statut) ;
   il manque la clé, l'appel serveur et le webhook de confirmation.
 - **Emails transactionnels** : confirmation de commande, de paiement, relances.
+  Le bouton **« Recevoir mon devis par email »** de la page finale enregistre le
+  lead et annonce un envoi sous 24 h ouvrées ; aujourd'hui cet envoi est fait à
+  la main depuis l'administration, aucun email ne part tout seul.
 - **Comptes et authentification** : l'administration est aujourd'hui accessible
   à qui connaît l'adresse `/admin`. **Elle doit être protégée avant toute mise
   en ligne.**

@@ -94,6 +94,7 @@ export default function ProjectDetail({ row, onBack, onChanged }: {
           <Card title="Ce que le client a construit">
             <Grid>
               <Info label="Activité" value={row.activityLabel} />
+              <Info label="Formule" value={row.planLabel} />
               <Info label="Thème" value={theme.name} />
               <Info label="Devise" value={project.currency} />
               <Info label="Prix affichés" value={project.showPrices ? 'Oui' : 'Non'} />

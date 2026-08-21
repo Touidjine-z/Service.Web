@@ -3,6 +3,9 @@ export default {
   content: ['./index.html', './src/**/*.{ts,tsx}'],
   theme: {
     extend: {
+      // Les ecrans larges sont la norme chez les professionnels qui construisent
+      // leur site : l'interface doit s'y etendre, pas rester en bande centrale.
+      screens: { '3xl': '1800px' },
       colors: {
         // Platform chrome tokens (the builder UI itself, not the client's site).
         ink: 'rgb(var(--ink) / <alpha-value>)',

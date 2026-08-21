@@ -186,7 +186,13 @@ export function enforcePlan(project: Project): Project {
  */
 export function applyPlan(project: Project, plan: Project['plan']): Project {
   const next = enforcePlan({ ...project, plan })
-  return { ...next, pages: next.pages.filter((p) => p.isHome || p.sections.length > 0) }
+  // Une page deja vide AVANT le changement n'a pas ete videe par lui : elle
+  // reste. Sans cette comparaison, une simple montee en gamme — qui promet de
+  // ne rien retirer — emporterait la page blanche que le client venait de creer.
+  const emptied = new Set(
+    project.pages.filter((p) => !p.isHome && p.sections.length > 0).map((p) => p.id),
+  )
+  return { ...next, pages: next.pages.filter((p) => p.sections.length > 0 || !emptied.has(p.id)) }
 }
 
 /**

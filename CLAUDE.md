@@ -2032,3 +2032,192 @@ ADMINISTRATION :
 
 Le domaine retenu apparaît dans la fiche du projet : c'est l'administrateur qui
 procède ensuite à la réservation.
+
+
+==================================================
+60. FORMULES
+==================================================
+
+Le parcours propose TROIS formules. Le client en choisit une avant de construire,
+et peut en changer jusqu'à la fin.
+
+L'échelle ne porte PAS sur la quantité de logiciel — le moteur est le même pour
+les trois — mais sur QUI FAIT LE TRAVAIL :
+
+- site modèle : le client part d'un site type et écrit, nous réalisons ;
+- site sur mesure : nous dessinons, le client fournit le contenu ;
+- site clé en main : nous dessinons ET nous rédigeons, le client n'a rien à
+  fournir.
+
+C'est le découpage des agences, et il a l'avantage d'être vérifiable par le
+client : avant de payer, il sait ce qu'il aura à faire lui-même.
+
+SITE MODÈLE :
+
+Le site type de son métier, monté avec ses textes, ses photos et ses couleurs.
+
+Pour le professionnel qui veut être trouvé sur internet, montrer ce qu'il fait,
+et qu'on l'appelle.
+
+SITE SUR MESURE :
+
+Le moteur entier : commande, rendez-vous, devis, pages et catalogue illimités.
+
+Pour celui qui vend, qui prend des commandes ou des rendez-vous.
+
+C'est la formule par DÉFAUT, et celle de tous les projets enregistrés avant
+cette option. Le défaut doit être le plus permissif : ouvrir plus que nécessaire
+ne casse rien, fermer rétroactivement amputerait des projets déjà construits.
+
+SITE CLÉ EN MAIN :
+
+Le même site que le sur mesure, mais le client n'a rien à écrire ni à
+photographier : nous nous en chargeons.
+
+Pour celui qui n'a pas le temps de rédiger, et qui veut être trouvé sur Google
+dès le départ.
+
+Il n'ouvre AUCUNE fonctionnalité de plus que le sur mesure, et ses plafonds sont
+IDENTIQUES aux siens. Ce qui l'en distingue n'est pas du logiciel, ce sont les
+SERVICES : nous rédigeons, nous achetons les images, nous posons les liens.
+
+CE QUE LE SITE MODÈLE FERME :
+
+La frontière tient en une phrase : le modèle MONTRE, le sur-mesure ENCAISSE,
+PREND RENDEZ-VOUS et COLLECTE.
+
+Sont donc fermés tout ce par quoi un visiteur envoie de l'argent ou une donnée
+structurée, et tout ce qui demande une logique métier, une donnée réglementée ou
+un second support — seize fonctionnalités :
+
+- Panier, Commande, Modes de service ;
+- Rendez-vous, Demande de devis, Recrutement, Lettre d'information ;
+- Fidélité, Recherche guidée ;
+- Établissements, Allergènes, Programme, Financement, Avant / Après ;
+- Affichage TV, QR Code ;
+- et le design entièrement sur mesure (thème « custom »).
+
+Cinq des quatorze objectifs tombent avec elles : recevoir des devis, des
+rendez-vous, des commandes, vendre des produits, afficher des promotions.
+
+Ce qui est fermé n'est JAMAIS caché. Caché, un module ne vend rien ; montré,
+étiqueté et cliquable, il explique ce qu'il fait et propose la formule qui le
+contient.
+
+PLAFONDS DU SITE MODÈLE :
+
+- 6 pages ;
+- 20 éléments de catalogue — produits, services et photos CUMULÉS ;
+- pas de design entièrement sur mesure.
+
+Le site sur mesure et le site clé en main n'ont aucun plafond, et leurs limites
+sont identiques : mêmes modules, mêmes pages, même catalogue, même design sur
+mesure.
+
+LES SERVICES — CE QUE NOUS FAISONS POUR LE CLIENT :
+
+Une formule ne se distingue pas seulement par ce que le logiciel ouvre, mais par
+le travail humain qu'elle comprend. Chaque formule déclare trois quantités :
+
+- site modèle : 6 pages rédigées, 10 images d'illustration, aucun lien entrant ;
+- site sur mesure : 10 pages rédigées, 20 images, 5 liens entrants ;
+- site clé en main : 20 pages rédigées, 40 images, 12 liens entrants.
+
+Ce sont des QUANTITÉS, jamais des montants : le catalogue des formules n'a pas le
+droit de connaître un prix (§56). L'écran de choix en déduit ses phrases —
+changer un nombre suffit, aucune rédaction à reprendre.
+
+OÙ LE CLIENT CHOISIT :
+
+Étape « Formule », en deuxième position du parcours, juste après le métier. On
+construit ainsi d'emblée dans le bon périmètre, au lieu de construire puis d'être
+amputé.
+
+Écran /creer/formule : trois cartes, à qui chacune s'adresse, ce qu'elle
+contient, ce que NOUS y faisons pour le client, et ce qu'elle ne contient pas.
+
+Chaque carte porte une pastille — « Le plus simple », « Le plus choisi », « Le
+plus complet ». Elle est DÉCLARÉE PAR LE CATALOGUE, pas arbitrée par l'écran :
+sans cela, ajouter une formule obligerait à rouvrir un composant pour décider
+laquelle porte quel libellé (§48).
+
+OÙ IL CHANGE D'AVIS :
+
+- à tout moment sur l'étape Formule ;
+- depuis l'onglet Paramètres du builder, qui rappelle sa formule ;
+- sur chaque verrou rencontré en construisant ;
+- sur la page finale, une fois le prix révélé, où SON projet est recalculé dans
+  la formule immédiatement supérieure et les deux devis comparés. La formule
+  haute n'affiche pas de comparaison : on ne descend pas un client.
+
+Un acompte encaissé fige la formule : le devis est émis, la suite passe par nous.
+
+UNE DESCENTE NE DÉTRUIT JAMAIS DE CONTENU :
+
+Passer au site modèle ferme les modules que la formule n'ouvre pas et retire les
+pages qui ne contenaient QUE ces modules. Les unes et les autres sont NOMMÉES
+dans la confirmation, jamais retirées en silence.
+
+Rien d'autre ne bouge : textes, produits, services, photos, couleurs, images et
+identité restent en place, et le retour au sur-mesure les retrouve.
+
+Si le projet dépasse un plafond — trop de pages, trop d'éléments de catalogue —
+la descente est REFUSÉE, et l'écran dit ce qui bloque. C'est au client de
+supprimer ce qu'il veut perdre : nous ne tronquons pas son travail.
+
+TARIFICATION :
+
+Un devis se compose de trois termes, et de rien d'autre :
+
+- la BASE de la formule, qui inclut un nombre de pages et fixe le prix de la page
+  supplémentaire ;
+- le CATALOGUE DE MODULES, commun aux trois formules, dont chacune ne facture
+  qu'une PART, réglée par un COEFFICIENT ;
+- le TRAVAIL HUMAIN AU-DELÀ DU QUOTA de la formule : les pages à rédiger et les
+  images d'illustration à acheter que le projet demande en plus.
+
+Le catalogue des modules reste UNIQUE et partagé : un module vaut le même tarif
+de référence dans les trois formules, et chaque formule n'en facture qu'une part.
+Deux tableaux de prix à tenir, ce sont deux tableaux qui divergent.
+
+Le site modèle est monté sur un site type : il ne facture qu'une part du tarif
+catalogue, et sa page supplémentaire vaut zéro puisque ses pages incluses sont
+déjà son plafond — aucune ligne « pages supplémentaires » ne peut apparaître sur
+un devis modèle.
+
+Le site clé en main n'ouvre aucun logiciel de plus que le sur mesure : c'est sa
+BASE qui paie la rédaction, les images et les liens entrants annoncés par ses
+quotas. Deux formules qui ouvrent les mêmes modules se séparent donc par leur
+base, jamais par un « if » dans un composant.
+
+Les trois bandes de prix doivent rester DISJOINTES sur des devis RÉELS : deux
+formules dont les fourchettes se recouvrent ne se choisissent plus, elles se
+négocient, et un montant ne dit plus quelle formule a été vendue.
+
+L'administration mesure donc la bande de chaque formule sur TOUS les métiers du
+catalogue, chacun monté comme le tunnel le montera chez le client, en affiche la
+médiane, et NOMME les formules qui se recouvrent. Le plafond théorique — toutes
+les fonctionnalités d'une formule cochées à la fois — est montré à part et
+étiqueté comme tel : aucun métier ne le demande, et ces plafonds se chevauchent
+sans que les devis réels le fassent.
+
+Tout cela est éditable en administration (§38), formule par formule, comme le
+reste des montants — y compris le prix d'une page rédigée et d'une image au-delà
+du quota. Rien n'est codé en dur.
+
+Le devis NOMME la formule retenue sur sa première ligne.
+
+LA RÈGLE §56 S'APPLIQUE INTÉGRALEMENT À L'ÉCRAN DE CHOIX :
+
+Aucun montant, aucune fourchette, aucun « à partir de », aucun badge € ou €€,
+aucun mot de gamme (« basique », « premium », « économique »). La différence se
+dit en fonctionnalités et en situations d'usage.
+
+Quand il faut nommer l'écart, la formulation retenue est : « plus complète, donc
+plus chère ». Le prix des trois formules se découvre à la fin, sur la page
+finale, avant tout engagement.
+
+Cette règle est STRUCTURELLE, pas seulement rédactionnelle : le catalogue des
+formules ne déclare aucun champ monétaire et n'importe rien du moteur de
+tarification — la dépendance ne va que dans l'autre sens. Un écran qui rend les
+formules est donc dans l'incapacité d'afficher un montant.

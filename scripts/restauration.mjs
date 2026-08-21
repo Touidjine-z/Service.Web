@@ -1,11 +1,15 @@
 import puppeteer from 'puppeteer-core'
+import { mkdirSync } from 'node:fs'
 
 /**
  * Chaine restauration : modes de service, offres, carte a onglets, formules,
  * allergenes, fidelite, etablissements — puis une commande avec mode de service
  * et sa remontee cote proprietaire.
  */
-const OUT = process.argv[2] || '.'
+// Par defaut, les captures sortent DU depot : `npm run smoke` ne passe aucun
+// argument, et le dossier courant est la racine du projet.
+const OUT = process.argv[2] || process.env.SHOTS || '/tmp/studio-captures'
+mkdirSync(OUT, { recursive: true })
 const errors = []
 const step = (m) => console.log('  …', m)
 
@@ -13,7 +17,7 @@ const step = (m) => console.log('  …', m)
 // page finale. Les prix du client sur son propre site restent legitimes (§56).
 const LEAK = /(prix de r[ée]alisation|co[ûu]t du site|acompte|votre devis|total [àa] payer)/i
 
-const b = await puppeteer.launch({ executablePath: '/usr/bin/google-chrome', headless: 'new', args: ['--no-sandbox'] })
+const b = await puppeteer.launch({ executablePath: '/usr/bin/google-chrome', headless: 'new', args: ['--no-sandbox', '--disable-gpu'] })
 const page = await b.newPage()
 await page.setViewport({ width: 1500, height: 1000 })
 page.on('pageerror', (e) => errors.push(`pageerror: ${e.message}`))

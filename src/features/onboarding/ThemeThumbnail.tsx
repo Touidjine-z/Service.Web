@@ -44,6 +44,9 @@ export default function ThemeThumbnail({ theme: rawTheme, colors, fontPair }: {
           borderRadius: theme.button === 'pill' ? '999px' : theme.button === 'sharp' ? '0' : radius,
           backgroundImage:
             theme.button === 'gradient' ? `linear-gradient(135deg, ${colors.primary}, ${colors.accent})` : undefined,
+          // Le relief teinte du bouton « raised » disparaitrait a cette echelle
+          // avec l'ombre du rendu reel : elle est rapprochee et resserree.
+          boxShadow: theme.button === 'raised' ? `0 3px 7px -3px ${withAlpha(colors.button, 0.9)}` : undefined,
         }
 
   const cardStyle: React.CSSProperties =
@@ -56,11 +59,16 @@ export default function ThemeThumbnail({ theme: rawTheme, colors, fontPair }: {
       : {
           background: theme.card === 'glass' ? withAlpha(colors.card, 0.55) : colors.card,
           border:
-            theme.card === 'outlined' ? `1px solid ${withAlpha(colors.text, 0.14)}`
+            theme.card === 'outlined' || theme.card === 'panel' ? `1px solid ${withAlpha(colors.text, 0.14)}`
             : theme.card === 'bordered-heavy' ? `2px solid ${colors.text}`
             : theme.card === 'glass' ? `1px solid ${withAlpha(colors.text, 0.16)}`
             : 'none',
-          boxShadow: theme.card === 'elevated' || theme.card === 'overlap' ? '0 6px 16px -8px rgba(0,0,0,.35)' : 'none',
+          boxShadow:
+            theme.card === 'elevated' || theme.card === 'overlap' ? '0 6px 16px -8px rgba(0,0,0,.35)'
+            // « panel » cumule filet et ombre : l'ombre y est plus discrete que
+            // celle d'une carte simplement surelevee.
+            : theme.card === 'panel' ? '0 5px 12px -8px rgba(0,0,0,.3)'
+            : 'none',
           borderRadius: radius,
         }
 

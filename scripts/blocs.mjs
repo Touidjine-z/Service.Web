@@ -1,7 +1,11 @@
 import puppeteer from 'puppeteer-core'
+import { mkdirSync } from 'node:fs'
 
 const BASE = 'http://localhost:5199'
-const OUT = process.argv[2] || '.'
+// Par defaut, les captures sortent DU depot : `npm run smoke` ne passe aucun
+// argument, et le dossier courant est la racine du projet.
+const OUT = process.argv[2] || process.env.SHOTS || '/tmp/studio-captures'
+mkdirSync(OUT, { recursive: true })
 const errors = []
 const step = (m) => console.log('  …', m)
 
@@ -11,7 +15,7 @@ const LEAK = /(prix de r[ée]alisation|co[ûu]t du site|acompte|votre devis|tota
 const browser = await puppeteer.launch({
   executablePath: '/usr/bin/google-chrome',
   headless: 'new',
-  args: ['--no-sandbox', '--window-size=1600,1000'],
+  args: ['--no-sandbox', '--disable-gpu', '--window-size=1600,1000'],
 })
 const page = await browser.newPage()
 await page.setViewport({ width: 1600, height: 1000 })

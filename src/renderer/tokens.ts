@@ -150,6 +150,15 @@ const CARD: Record<CardStyle, (c: StyleContext) => CSSProperties> = {
     boxShadow: `${scale(6)}px ${scale(6)}px 0 0 ${colors.primary}`,
     borderRadius: radius,
   }),
+  // Filet fin ET ombre douce. Toutes les autres cartes choisissent l'un ou
+  // l'autre : c'est ce cumul qui donne le relief discret des pages d'agence,
+  // ou la carte doit se detacher d'un fond deja tres clair.
+  panel: ({ colors, radius, divider }) => ({
+    background: colors.card,
+    border: `1px solid ${divider}`,
+    boxShadow: '0 14px 30px -24px rgba(0,0,0,.45)',
+    borderRadius: radius,
+  }),
 }
 
 /**
@@ -226,6 +235,21 @@ const BUTTON: Record<ButtonStyle, (c: StyleContext, variant: Variant) => CSSProp
       textTransform: 'uppercase',
     }
     return v === 'secondary' ? secondaryButton(shape) : { ...shape, background: c.colors.button, color: c.onButton, border: 'none' }
+  },
+  // Le relief vient de la MARQUE : l'ombre est teintee de la couleur du bouton,
+  // pas d'un gris. C'est l'appel a l'action des pages commerciales, et la seule
+  // variante pleine qui ne soit pas posee a plat sur la section.
+  raised: (c, v) => {
+    const shape = { paddingInline: `${c.scale(24)}px`, paddingBlock: `${c.scale(14)}px`, borderRadius: c.radius }
+    return v === 'secondary'
+      ? secondaryButton(shape)
+      : {
+          ...shape,
+          background: c.colors.button,
+          color: c.onButton,
+          border: 'none',
+          boxShadow: `0 ${c.scale(12)}px ${c.scale(24)}px -${c.scale(12)}px ${withAlpha(c.colors.button, 0.9)}`,
+        }
   },
 }
 

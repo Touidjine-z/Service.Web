@@ -1,4 +1,6 @@
+import { useNavigate } from 'react-router-dom'
 import type { Currency, GridSettings } from '@/engine/types'
+import { planDefOf } from '@/engine/plans'
 import { CURRENCY_SYMBOL } from '@/renderer/samples'
 import { useProject } from '@/store/ProjectStore'
 
@@ -32,10 +34,28 @@ const GRID_FIELDS: { key: keyof GridSettings; label: string; options: { value: s
  * realisation du site, qui reste invisible jusqu'a la page finale (§56).
  */
 export default function SettingsPanel() {
+  const navigate = useNavigate()
   const { project, dispatch } = useProject()
+  // La formule se lit dans le catalogue : ni libelle en dur, ni montant (§56).
+  const plan = planDefOf(project)
 
   return (
     <div className="space-y-5 p-4">
+      <div>
+        <p className="label">Votre formule</p>
+        <div className="rounded-xl border border-line bg-canvas p-3">
+          <p className="text-sm font-semibold text-ink">{plan.label}</p>
+          <p className="mt-1 text-[11px] leading-relaxed text-muted">{plan.tagline}</p>
+          <button
+            type="button"
+            className="mt-2 text-[11px] font-semibold text-brand hover:underline"
+            onClick={() => navigate('/creer/formule')}
+          >
+            Changer de formule
+          </button>
+        </div>
+      </div>
+
       <div>
         <p className="label">Devise du site</p>
         <select

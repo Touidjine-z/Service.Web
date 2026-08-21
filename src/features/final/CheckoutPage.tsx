@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Lock, Loader2, ShieldCheck } from 'lucide-react'
 import type { Payment } from '@/engine/types'
@@ -57,12 +57,16 @@ export default function CheckoutPage() {
     navigate('/confirmation')
   }
 
-  if (!project.priceRevealed) {
-    // Garde-fou : on n'atteint jamais le paiement sans etre passe par la page
-    // finale, sinon un montant s'afficherait hors de son moment (§56).
-    navigate('/creer/final', { replace: true })
-    return null
-  }
+  /**
+   * Garde §56 : on n'atteint jamais le paiement sans etre passe par la page
+   * finale. La redirection passe par un effet — appelee pendant le rendu, elle
+   * etait ignoree et laissait le client devant une page blanche.
+   */
+  useEffect(() => {
+    if (!project.priceRevealed) navigate('/creer/final', { replace: true })
+  }, [project.priceRevealed, navigate])
+
+  if (!project.priceRevealed) return null
 
   return (
     <div className="min-h-screen bg-canvas">

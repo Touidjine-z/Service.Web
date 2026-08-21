@@ -3,9 +3,11 @@ import { AlertTriangle, Check, RotateCcw, Sparkles, Wand2 } from 'lucide-react'
 import { auditContrast, generatePalette, type HarmonyMode } from '@/engine/color'
 import { FONT_PAIRS } from '@/engine/fonts'
 import { THEMES, getTheme } from '@/engine/themes'
+import { planDefOf, planLimits, upgradeOf } from '@/engine/plans'
 import type { ColorScheme } from '@/engine/types'
 import ThemeThumbnail from '@/features/onboarding/ThemeThumbnail'
 import ColorField from '@/ui/ColorField'
+import { PlanLock, PlanUpgradeDialog } from '@/ui/PlanLock'
 import { useProject } from '@/store/ProjectStore'
 
 /**
@@ -42,6 +44,10 @@ export default function DesignPanel() {
   const { project, dispatch } = useProject()
   const [open, setOpen] = useState<Block>('theme')
   const [keepColors, setKeepColors] = useState(true)
+  // Formule (§60) : la vignette « sur mesure » se verrouille au lieu d'avaler
+  // le clic. `upgrade` vaut null en sur-mesure, la branche disparait d'elle-meme.
+  const upgrade = upgradeOf(planDefOf(project))
+  const [askingCustom, setAskingCustom] = useState(false)
   const [harmony, setHarmony] = useState<HarmonyMode>('analogous')
 
   const theme = getTheme(project.themeId)
@@ -66,6 +72,33 @@ export default function DesignPanel() {
         <div className="grid grid-cols-2 gap-2">
           {THEMES.map((item) => {
             const active = item.id === project.themeId
+            // Le design entierement sur mesure est ferme au site modele (§60).
+            // Le reducer refuse deja l'action ; sans ce verrou, le clic serait
+            // simplement avale, sans un mot — le pire des comportements.
+            if (item.id === 'custom' && !planLimits(project).customTheme && upgrade) {
+              return (
+                <div
+                  key={item.id}
+                  onClick={() => setAskingCustom(true)}
+                  title={`Le design entièrement sur mesure fait partie du ${upgrade.label.toLowerCase()}.`}
+                  className="cursor-pointer overflow-hidden rounded-lg border border-line opacity-60 transition hover:border-brand/40 hover:opacity-100"
+                >
+                  <span className="relative block aspect-[4/3] overflow-hidden">
+                    <ThemeThumbnail theme={item} colors={item.colors} fontPair={project.fontPair} />
+                    <span className="absolute right-1 top-1">
+                      <PlanLock
+                        feature="Le design entièrement sur mesure"
+                        explain="Nous dessinons votre site à partir de votre identité visuelle, au lieu de partir d'un des designs existants."
+                        onUpgraded={() => dispatch({ type: 'setTheme', themeId: item.id, keepColors })}
+                      />
+                    </span>
+                  </span>
+                  <span className="block truncate px-1.5 py-1 text-[11px] font-medium text-subtle">
+                    {item.name}
+                  </span>
+                </div>
+              )
+            }
             return (
               <button
                 key={item.id}
@@ -193,6 +226,18 @@ export default function DesignPanel() {
         <Wand2 size={12} className="mt-px shrink-0" />
         Chaque changement s'applique immédiatement à l'aperçu. Ctrl+Z annule.
       </p>
+
+      {askingCustom && (
+        <PlanUpgradeDialog
+          feature="Le design entièrement sur mesure"
+          explain="Nous dessinons votre site à partir de votre identité visuelle, au lieu de partir d'un des designs existants."
+          onClose={() => setAskingCustom(false)}
+          onUpgraded={() => {
+            dispatch({ type: 'setTheme', themeId: 'custom', keepColors })
+            setAskingCustom(false)
+          }}
+        />
+      )}
     </div>
   )
 

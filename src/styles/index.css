@@ -35,8 +35,16 @@
 }
 
 @layer components {
+  /**
+   * Largeur des pages de la plateforme. Elle GRANDIT avec l'ecran au lieu de
+   * s'arreter a une bande centrale : les grilles de metiers, de thèmes et de
+   * fonctionnalites gagnent des colonnes, et les tableaux d'administration
+   * respirent. Les blocs de texte, eux, gardent leur propre largeur maximale la
+   * ou ils sont poses (max-w-2xl, max-w-3xl) : une phrase de 1600 px ne se lit
+   * pas.
+   */
   .container-page {
-    @apply mx-auto w-full max-w-6xl px-5 sm:px-8;
+    @apply mx-auto w-full max-w-6xl px-5 sm:px-8 xl:max-w-[86rem] xl:px-10 2xl:max-w-[104rem] 2xl:px-14 3xl:max-w-[160rem] 3xl:px-16;
   }
 
   .card {

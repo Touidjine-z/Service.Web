@@ -180,13 +180,13 @@ export function suggestTheme(analysis: Analysis): Project['themeId'] {
     fleuriste: 'nature', opticien: 'clean', menuisier: 'nature', plombier: 'professional',
     electricien: 'professional', peintre: 'creative', macon: 'corporate', serrurier: 'professional',
     medecin: 'clean', dentiste: 'clean', kine: 'clean', psychologue: 'elegant',
-    avocat: 'classic', comptable: 'corporate', consultant: 'modern', coach: 'dynamic',
+    avocat: 'classic', comptable: 'corporate', consultant: 'agence', coach: 'dynamic',
     agence: 'dark', photographe: 'minimal', garage: 'atelier', immobilier: 'premium',
     carrosserie: 'bold', 'centre-auto': 'vitrine', pneus: 'bold',
     'pare-brise': 'clean', 'controle-technique': 'brief', depannage: 'urban',
     preparation: 'studio', moto: 'dark', 'vente-auto': 'premium',
     'formation-auto': 'civic',
-    coiffeur: 'luxury', architecte: 'minimal', association: 'fresh',
+    coiffeur: 'luxury', architecte: 'minimal', association: 'repere',
   }
   const id = analysis.activityId ? byActivity[analysis.activityId] : undefined
   return id && THEMES.some((t) => t.id === id) ? id : 'modern'

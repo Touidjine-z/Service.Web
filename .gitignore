@@ -6,3 +6,8 @@ dist-ssr
 .env
 .env.*
 !.env.example
+
+# Captures des scenarios de test (scripts/*.mjs). Ce sont des artefacts : ils se
+# regenerent a chaque execution et n'ont rien a faire dans l'historique.
+/*.png
+/captures/

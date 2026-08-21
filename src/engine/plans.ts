@@ -1,4 +1,4 @@
-import type { ModuleId, ObjectiveDef, PlanDef, PlanId, PlanLimits, Project } from './types'
+import type { ModuleId, ObjectiveDef, PlanDef, PlanId, PlanLimits, PlanServices, Project } from './types'
 import { MODULE_BY_ID, MODULES } from './modules'
 
 /**
@@ -34,12 +34,24 @@ const TEMPLATE_BLOCKED: ModuleId[] = [
   'venues', 'allergens', 'program', 'funding', 'beforeafter', 'tv', 'qrcode',
 ]
 
+/**
+ * L'echelle des trois formules ne porte pas sur la quantite de logiciel — le
+ * moteur est le meme — mais sur QUI FAIT LE TRAVAIL :
+ *
+ *   modele      → vous partez d'un site type, vous ecrivez, nous realisons ;
+ *   sur mesure  → nous dessinons votre site, vous fournissez le contenu ;
+ *   cle en main → nous dessinons ET nous redigeons, vous n'avez rien a fournir.
+ *
+ * C'est le decoupage des agences, et il a l'avantage d'etre verifiable par le
+ * client : il sait ce qu'il aura a faire lui-meme.
+ */
 export const PLANS: PlanDef[] = [
   {
     id: 'template',
     label: 'Site modèle',
     tagline: 'Le site type de votre métier, monté avec vos textes, vos photos et vos couleurs.',
     audience: "Vous voulez être trouvé sur internet, montrer ce que vous faites, et qu'on vous appelle.",
+    badge: 'Le plus simple',
     highlights: [
       'Le design de votre choix, à vos couleurs',
       "Jusqu'à 6 pages",
@@ -60,6 +72,7 @@ export const PLANS: PlanDef[] = [
       maxCatalogItems: 20,
       customTheme: false,
     },
+    services: { writtenPages: 6, stockImages: 10, backlinks: 0 },
     upgradeTo: 'website',
   },
   {
@@ -67,6 +80,7 @@ export const PLANS: PlanDef[] = [
     label: 'Site sur mesure',
     tagline: 'Le moteur entier : commande, rendez-vous, devis, pages et catalogue illimités.',
     audience: 'Vous vendez, vous prenez des commandes ou des rendez-vous.',
+    badge: 'Le plus choisi',
     highlights: [
       'Tout ce que contient le site modèle',
       'Commande en ligne, panier, modes de service',
@@ -82,7 +96,31 @@ export const PLANS: PlanDef[] = [
       maxCatalogItems: Number.POSITIVE_INFINITY,
       customTheme: true,
     },
+    services: { writtenPages: 10, stockImages: 20, backlinks: 5 },
+    upgradeTo: 'turnkey',
     recommended: true,
+  },
+  {
+    id: 'turnkey',
+    label: 'Site clé en main',
+    tagline: "Le même site, mais vous n'avez rien à écrire ni à photographier : nous nous en chargeons.",
+    audience: "Vous n'avez pas le temps de rédiger, et vous voulez être trouvé sur Google dès le départ.",
+    badge: 'Le plus complet',
+    highlights: [
+      'Tout ce que contient le site sur mesure',
+      'Vos pages rédigées par nous, prêtes à publier',
+      "Vos images d'illustration achetées et intégrées",
+      'Des liens entrants posés pour votre référencement',
+      "Rien à préparer de votre côté",
+    ],
+    excludes: [],
+    limits: {
+      blockedModules: [],
+      maxPages: Number.POSITIVE_INFINITY,
+      maxCatalogItems: Number.POSITIVE_INFINITY,
+      customTheme: true,
+    },
+    services: { writtenPages: 20, stockImages: 40, backlinks: 12 },
   },
 ]
 
@@ -137,6 +175,11 @@ export function planAllowsObjective(plan: PlanId, def: ObjectiveDef): boolean {
 export function blockedModuleDefs(plan: PlanId) {
   const blocked = new Set((PLAN_BY_ID.get(plan) ?? PLAN_BY_ID.get(DEFAULT_PLAN_ID)!).limits.blockedModules)
   return MODULES.filter((m) => blocked.has(m.id))
+}
+
+/** Ce que la formule prend en charge : redaction, images, referencement. */
+export function planServices(project: Pick<Project, 'plan'>): PlanServices {
+  return planDefOf(project).services
 }
 
 export function pagesLeft(project: Project): number {

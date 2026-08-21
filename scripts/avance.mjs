@@ -1,9 +1,13 @@
 import puppeteer from 'puppeteer-core'
-const OUT = process.argv[2] || '.'
+import { mkdirSync } from 'node:fs'
+// Par defaut, les captures sortent DU depot : `npm run smoke` ne passe aucun
+// argument, et le dossier courant est la racine du projet.
+const OUT = process.argv[2] || process.env.SHOTS || '/tmp/studio-captures'
+mkdirSync(OUT, { recursive: true })
 const errors = []
 const step = (m) => console.log('  …', m)
 
-const b = await puppeteer.launch({ executablePath: '/usr/bin/google-chrome', headless: 'new', args: ['--no-sandbox'] })
+const b = await puppeteer.launch({ executablePath: '/usr/bin/google-chrome', headless: 'new', args: ['--no-sandbox', '--disable-gpu'] })
 const page = await b.newPage()
 await page.setViewport({ width: 1500, height: 1000 })
 page.on('pageerror', (e) => errors.push(`pageerror: ${e.message}`))
@@ -63,8 +67,12 @@ if (!/Favicon/i.test(seo)) errors.push('seo : favicon absent')
 if (!/Open Graph/i.test(seo)) errors.push('seo : Open Graph absent')
 await shot('42-seo')
 
-// QR (§25)
+// QR (§25) — l'onglet suit le module, et le module suit la formule (§60) :
+// on l'active explicitement plutot que de supposer qu'un menuisier l'a.
 step('qr')
+await go('/creer/fonctionnalites')
+await click('QR Code')
+await go('/creer/site')
 const hasQrTab = await page.evaluate(() => Boolean(document.querySelector('aside nav button[aria-label="QR Code"]')))
 if (!hasQrTab) errors.push('qr : onglet absent')
 else {

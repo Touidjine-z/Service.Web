@@ -3,6 +3,7 @@ import { HashRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { ProjectProvider } from '@/store/ProjectStore'
 import LandingPage from '@/features/landing/LandingPage'
 import ActivityStep from '@/features/onboarding/ActivityStep'
+import PlanStep from '@/features/onboarding/PlanStep'
 import ExpressStep from '@/features/onboarding/ExpressStep'
 import ObjectivesStep from '@/features/onboarding/ObjectivesStep'
 import FeaturesStep from '@/features/onboarding/FeaturesStep'
@@ -31,6 +32,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/creer/activite" element={<ActivityStep />} />
+          <Route path="/creer/formule" element={<PlanStep />} />
           <Route path="/creer/express" element={<ExpressStep />} />
           <Route path="/creer/objectifs" element={<ObjectivesStep />} />
           <Route path="/creer/fonctionnalites" element={<FeaturesStep />} />

@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { ChevronDown, ChevronUp, Copy, Home, Plus, Trash2 } from 'lucide-react'
+import { pagesLeft, planDefOf, planLimits, upgradeOf } from '@/engine/plans'
 import { useProject } from '@/store/ProjectStore'
+import { PlanLimitNotice } from '@/ui/PlanLock'
 
 /** Gestion des pages (§13) : ajouter, renommer, dupliquer, deplacer, accueil. */
 export default function PagesPanel({ currentPageId, onSelect }: {
@@ -10,9 +12,15 @@ export default function PagesPanel({ currentPageId, onSelect }: {
   const { project, dispatch } = useProject()
   const [name, setName] = useState('')
 
+  // Plafond de pages de la formule (§60). Le reducer refuse deja l'action ; on
+  // le DOUBLE ici pour que le client voie la limite au lieu de la heurter.
+  const limits = planLimits(project)
+  const full = pagesLeft(project) === 0
+  const upgrade = upgradeOf(planDefOf(project))
+
   function addPage() {
     const label = name.trim()
-    if (!label) return
+    if (!label || full) return
     dispatch({ type: 'addPage', name: label })
     setName('')
   }
@@ -49,7 +57,7 @@ export default function PagesPanel({ currentPageId, onSelect }: {
                 <IconBtn label="Descendre" disabled={index === project.pages.length - 1} onClick={() => dispatch({ type: 'movePage', pageId: page.id, direction: 1 })}>
                   <ChevronDown size={13} />
                 </IconBtn>
-                <IconBtn label="Dupliquer" onClick={() => dispatch({ type: 'duplicatePage', pageId: page.id })}>
+                <IconBtn label="Dupliquer" disabled={full} onClick={() => dispatch({ type: 'duplicatePage', pageId: page.id })}>
                   <Copy size={13} />
                 </IconBtn>
                 <IconBtn label="Définir comme accueil" disabled={page.isHome} onClick={() => dispatch({ type: 'setHomePage', pageId: page.id })}>
@@ -80,13 +88,22 @@ export default function PagesPanel({ currentPageId, onSelect }: {
           className="field !py-2 text-xs"
           placeholder="Nouvelle page"
           value={name}
+          disabled={full}
           onChange={(e) => setName(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && addPage()}
         />
-        <button type="button" className="btn-secondary !px-3 !py-2" onClick={addPage} disabled={!name.trim()}>
+        <button type="button" className="btn-secondary !px-3 !py-2" onClick={addPage} disabled={full || !name.trim()}>
           <Plus size={15} />
         </button>
       </div>
+
+      {full && upgrade && (
+        <PlanLimitNotice
+          title={`${limits.maxPages} pages — le ${upgrade.label.toLowerCase()} n'a pas de limite.`}
+          feature="Les pages supplémentaires"
+          explain="Vous pouvez créer autant de pages que votre activité en demande : une par prestation, une par ville, une actualité."
+        />
+      )}
     </div>
   )
 }

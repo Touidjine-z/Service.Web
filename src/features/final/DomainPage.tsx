@@ -108,12 +108,17 @@ export default function DomainPage() {
     })
   }
 
-  if (!project.priceRevealed) {
-    // Meme garde que le paiement : on n'entre pas ici sans etre passe par la
-    // page finale, sinon des montants s'afficheraient hors de leur moment (§56).
-    navigate('/creer/final', { replace: true })
-    return null
-  }
+  /**
+   * Meme garde que le paiement : on n'entre pas ici sans etre passe par la page
+   * finale, sinon des montants s'afficheraient hors de leur moment (§56). Elle
+   * passe par un effet — appelee pendant le rendu, la redirection etait ignoree
+   * et laissait une page blanche.
+   */
+  useEffect(() => {
+    if (!project.priceRevealed) navigate('/creer/final', { replace: true })
+  }, [project.priceRevealed, navigate])
+
+  if (!project.priceRevealed) return null
 
   return (
     <div className="min-h-screen bg-canvas">

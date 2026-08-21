@@ -2,9 +2,11 @@ import { useState } from 'react'
 import { ChevronDown, ChevronUp, Copy, Eye, EyeOff, Image as ImageIcon, Plus, Trash2, X } from 'lucide-react'
 import type { GalleryItem, Product, ProductTag, Service } from '@/engine/types'
 import { ALLERGENS, PRODUCT_TAGS } from '@/engine/catalog'
+import { catalogLeft, catalogSize, planDefOf, planLimits, upgradeOf } from '@/engine/plans'
 import { CURRENCY_SYMBOL } from '@/renderer/samples'
 import { isTableService } from '@/renderer/sectionDefs'
 import { useProject } from '@/store/ProjectStore'
+import { PlanLimitNotice } from '@/ui/PlanLock'
 import MediaPicker from './MediaPicker'
 
 type Catalog = 'products' | 'services' | 'gallery'
@@ -28,7 +30,17 @@ export default function CatalogPanel({ catalog }: { catalog: Catalog }) {
   // carte : c'est le catalogue metier qui le dit, pas une branche par activite.
   const menuLike = isTableService(project)
 
+  // Plafond de catalogue de la formule (§60). Il est CUMULE : produits, services
+  // et galerie tirent sur la meme reserve, donc on interroge le moteur au lieu
+  // de compter la liste affichee. Le reducer refuse deja l'ajout ; l'interface
+  // le double pour que la limite se voie avant d'etre heurtee.
+  const limits = planLimits(project)
+  const capped = Number.isFinite(limits.maxCatalogItems)
+  const full = catalogLeft(project) === 0
+  const upgrade = upgradeOf(planDefOf(project))
+
   function add() {
+    if (full) return
     if (catalog === 'products') dispatch({ type: 'addProduct' })
     else if (catalog === 'services') dispatch({ type: 'addService' })
     else dispatch({ type: 'addGalleryItem', item: { imageUrl: '', title: 'Nouvelle image' } })
@@ -53,7 +65,14 @@ export default function CatalogPanel({ catalog }: { catalog: Catalog }) {
 
   return (
     <div className="p-4">
-      <p className="label">{labels.title}</p>
+      <div className="flex items-baseline justify-between gap-2">
+        <p className="label">{labels.title}</p>
+        {capped && (
+          <span className="mb-1.5 shrink-0 text-[11px] font-medium tabular-nums text-subtle">
+            {catalogSize(project)} / {limits.maxCatalogItems}
+          </span>
+        )}
+      </div>
 
       {catalog === 'products' && (
         <div className="mb-4 rounded-xl border border-line bg-canvas p-3">
@@ -195,7 +214,7 @@ export default function CatalogPanel({ catalog }: { catalog: Catalog }) {
                   <div className="flex items-center justify-between border-t border-line pt-2">
                     <div className="flex gap-1">
                       {catalog !== 'gallery' && (
-                        <button type="button" className="rounded-md p-1.5 text-subtle hover:text-ink" title="Dupliquer" onClick={() => duplicate(item.id)}>
+                        <button type="button" className="rounded-md p-1.5 text-subtle transition hover:text-ink disabled:opacity-25" title="Dupliquer" disabled={full} onClick={() => duplicate(item.id)}>
                           <Copy size={13} />
                         </button>
                       )}
@@ -223,9 +242,17 @@ export default function CatalogPanel({ catalog }: { catalog: Catalog }) {
 
       {items.length === 0 && <p className="rounded-xl bg-canvas px-3 py-4 text-xs leading-relaxed text-subtle">{labels.empty}</p>}
 
-      <button type="button" className="btn-secondary mt-3 w-full !py-2 text-xs" onClick={add}>
+      <button type="button" className="btn-secondary mt-3 w-full !py-2 text-xs" disabled={full} onClick={add}>
         <Plus size={14} /> {labels.add}
       </button>
+
+      {full && upgrade && (
+        <PlanLimitNotice
+          title={`${limits.maxCatalogItems} éléments — le ${upgrade.label.toLowerCase()} n'a pas de limite.`}
+          feature="Un catalogue sans limite"
+          explain="Produits, services et photos partagent la même réserve. Sans plafond, vous montrez toute votre carte et toutes vos réalisations."
+        />
+      )}
 
       {picking && (
         <MediaPicker

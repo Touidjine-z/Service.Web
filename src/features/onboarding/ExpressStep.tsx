@@ -68,7 +68,9 @@ export default function ExpressStep() {
     window.scrollTo({ top: 0 })
   }
 
-  if (done) return <ReadyScreen name={form.businessName.trim()} onEdit={() => navigate('/creer/site')} />
+  // La suite passe par l'etape Formule, jamais directement par le builder :
+  // sinon le chemin le plus rapide rendrait le site modele inatteignable.
+  if (done) return <ReadyScreen name={form.businessName.trim()} onEdit={() => navigate('/creer/formule')} />
 
   return (
     <div className="min-h-screen bg-canvas">

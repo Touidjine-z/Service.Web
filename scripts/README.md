@@ -1,6 +1,6 @@
 # Tests de parcours (navigateur)
 
-Dix scénarios joués dans un vrai navigateur, avec captures d'écran. Ils
+Onze scénarios joués dans un vrai navigateur, avec captures d'écran. Ils
 vérifient ce qu'un typecheck ne peut pas voir : le parcours réel, les montants,
 et surtout qu'aucun prix de réalisation ne fuit avant la page finale (§56).
 
@@ -16,6 +16,7 @@ et surtout qu'aucun prix de réalisation ne fuit avant la page finale (§56).
 | `blocs.mjs` | Catalogue rangé par intention, ajout par variante, édition d'un bloc, masquage, suppression, persistance |
 | `grille.mjs` | Grille fluide : déduction de la première mise en page, glisser-déposer aimanté à la cellule, poignées de redimensionnement, disposition mobile indépendante, persistance, retour à l'empilement, absence de poignées côté visiteur |
 | `automobile.mjs` | Recherche de métier par mots-clés, sélecteur de véhicule, forfaits d'entretien, recherche de pneus par dimension, devis carrosserie en photos, programme et financement d'un centre de formation |
+| `formules.mjs` | Choix entre site modèle et site sur mesure, fonctionnalités fermées par la formule, plafond de pages, devis qui nomme la formule, comparaison chiffrée et montée en gamme après révélation, liens profonds vers les écrans monétaires, tarifs enregistrés avant les formules |
 
 ## Lancer
 
@@ -32,6 +33,12 @@ node scripts/parcours.mjs /tmp/shots
 
 Chaque script prend en argument le dossier où écrire ses captures, et sort en
 code 1 en listant ce qui a échoué.
+
+**Sans argument, les captures vont dans `/tmp/studio-captures`, jamais dans le
+dépôt.** `npm run smoke` enchaîne les onze scénarios sans passer de chemin :
+tant que le défaut était le dossier courant, chaque passage semait des PNG à la
+racine et le commit suivant les embarquait. La variable d'environnement `SHOTS`
+permet de choisir un autre dossier pour toute une série.
 
 Chrome est attendu à `/usr/bin/google-chrome`. Chaque lancement part d'un profil
 neuf, donc d'une base IndexedDB vide : chaque script crée les données dont il a

@@ -33,6 +33,7 @@ const DEMOS: Demo[] = [
   { activityId: 'photographe', themeId: 'minimal', businessName: 'Claire Vidal', tagline: 'Portraits, mariages et reportages', city: 'Nantes' },
   { activityId: 'garage', themeId: 'urban', businessName: 'Garage Central', tagline: 'Entretien, réparation et carrosserie', city: 'Lille' },
   { activityId: 'avocat', themeId: 'classic', businessName: 'Cabinet Merle', tagline: 'Droit des affaires et du travail', city: 'Paris' },
+  { activityId: 'consultant', themeId: 'agence', businessName: 'Novéo Conseil', tagline: 'Stratégie, organisation et pilotage de projets', city: 'Toulouse' },
 ]
 
 const VIEWPORTS: { id: Viewport; label: string; icon: typeof Monitor }[] = [
@@ -79,7 +80,9 @@ export default function SiteShowcase() {
 
   return (
     <Reveal delay={380} zoom>
-      <div className="mx-auto mt-14 max-w-5xl">
+      {/* La demonstration est la piece maitresse de la vitrine : elle suit la
+          largeur de l'ecran au lieu de rester une vignette centrale. */}
+      <div className="mx-auto mt-14 max-w-5xl xl:max-w-[76rem] 2xl:max-w-[88rem]">
         <div className="mb-4 flex flex-wrap items-center justify-center gap-1.5">
           {VIEWPORTS.map((item) => {
             const active = item.id === viewport

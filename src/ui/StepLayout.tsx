@@ -30,10 +30,13 @@ export default function StepLayout({
   }
 
   return (
-    <div className="min-h-screen bg-canvas">
+    // Colonne : le contenu prend la place disponible, la barre d'actions se pose
+    // dessous. Sur une etape courte elle atterrit donc au bas de l'ecran, et sur
+    // une etape longue elle attend la fin du contenu au lieu de le recouvrir.
+    <div className="flex min-h-screen flex-col bg-canvas">
       <StepBar current={step} />
 
-      <main className="container-page py-10 sm:py-14">
+      <main className="container-page flex-1 py-10 sm:py-14">
         {/* Chaque etape est une route distincte : le composant est remonte, et
             l'animation d'entree rejoue toute seule. */}
         <header className="mb-8 max-w-2xl animate-fade-up">
@@ -46,7 +49,10 @@ export default function StepLayout({
         </div>
       </main>
 
-      <footer className="sticky bottom-0 border-t border-line bg-surface/90 backdrop-blur">
+      {/* Plus de `sticky` : collee en bas, la barre masquait les dernieres
+          vignettes de l'etape Design et les derniers blocs de l'etape Couleurs
+          — mesure faite, six et trois elements passaient derriere elle. */}
+      <footer className="border-t border-line bg-surface/90 backdrop-blur">
         <div className="container-page flex items-center justify-between gap-4 py-4">
           <div className="flex items-center gap-3">
             {back && (

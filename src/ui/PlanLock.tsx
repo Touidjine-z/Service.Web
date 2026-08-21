@@ -1,7 +1,18 @@
 import { useState, type ReactNode } from 'react'
 import { Lock, Sparkles, X } from 'lucide-react'
 import { planDefOf, upgradeOf } from '@/engine/plans'
+import { hasReached } from '@/engine/status'
 import { useProject } from '@/store/ProjectStore'
+import type { Project } from '@/engine/types'
+
+/**
+ * Un acompte fige la formule (§60) : le reducer refuse alors `setPlan`. Les
+ * verrous s'effacent au lieu de proposer un bouton mort — proposer une action
+ * que le moteur refusera est pire que ne rien proposer.
+ */
+function canUpgrade(project: Project) {
+  return Boolean(upgradeOf(planDefOf(project))) && !hasReached(project.status, 'deposit-paid')
+}
 
 /**
  * Verrou de formule (§60). Primitive unique, lue par tous les ecrans qui
@@ -33,7 +44,7 @@ export function PlanLock({ feature, explain, label, onUpgraded, className = '' }
   const { project } = useProject()
   const [open, setOpen] = useState(false)
   const upgrade = upgradeOf(planDefOf(project))
-  if (!upgrade) return null
+  if (!upgrade || !canUpgrade(project)) return null
 
   return (
     <>
@@ -69,7 +80,7 @@ export function PlanLimitNotice({ title, feature, explain, onUpgraded }: {
   const { project } = useProject()
   const [open, setOpen] = useState(false)
   const upgrade = upgradeOf(planDefOf(project))
-  if (!upgrade) return null
+  if (!upgrade || !canUpgrade(project)) return null
 
   return (
     <>
@@ -107,7 +118,7 @@ export function PlanUpgradeDialog({ feature, explain, onClose, onUpgraded }: {
   const { project, dispatch } = useProject()
   const current = planDefOf(project)
   const upgrade = upgradeOf(current)
-  if (!upgrade) return null
+  if (!upgrade || !canUpgrade(project)) return null
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-4" onClick={onClose}>

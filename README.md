@@ -8,7 +8,7 @@ Ce n'est pas une vitrine de services : c'est un outil commercial. Le client
 investit du temps dans son projet, voit le résultat, et devient un prospect
 qualifié au moment où le prix apparaît.
 
-- La **spécification produit** fait foi : [`CLAUDE.md`](CLAUDE.md) (59 sections).
+- La **spécification produit** fait foi : [`CLAUDE.md`](CLAUDE.md) (60 sections).
 - Le **fonctionnement détaillé** de ce qui existe aujourd'hui :
   [`FONCTIONNEMENT.md`](FONCTIONNEMENT.md).
 
@@ -38,10 +38,11 @@ colors + content`. Ajouter un métier = ajouter une entrée dans
 src/
   engine/            Moteur, sans dépendance à React
     types.ts         Modèle de données du projet
-    activities.ts    31 métiers en 6 secteurs + squelettes de pages
+    activities.ts    41 métiers en 7 secteurs + squelettes de pages
     catalog.ts       Vocabulaire du catalogue : étiquettes produit, allergènes
     modules.ts       Objectifs → modules → sections
-    themes.ts        Les 32 thèmes, sous forme de tokens
+    plans.ts         Les 3 formules : ce qu'elles ouvrent, plafonds, services
+    themes.ts        Les 34 thèmes, sous forme de tokens
     fonts.ts         Les 12 appairages de polices (project.fontPair)
     color.ts         HEX/RGB/HSL, génération de palette, contraste WCAG
     imageBank.ts     Banque d'images, 10 catégories
@@ -66,6 +67,7 @@ src/
     db.ts            Persistance Dexie (projets, versions, leads)
   ui/                Primitives partagées de la plateforme
     motion.tsx       Apparitions, compteurs, bandeaux, parallaxe (sans dépendance)
+    PlanLock.tsx     Verrou de formule : pastille, bandeau, feuille de montée
   features/          Un dossier par écran
     landing          Vitrine : démonstration live, galerie, chat de qualification
     onboarding, builder, preview, final, tv, admin
@@ -76,7 +78,7 @@ Trois points d'architecture portent tout le reste :
 
 - **`renderer/tokens.ts`** est le seul endroit où un thème devient du CSS. Les
   sections ne connaissent que ces helpers, jamais un `themeId`. C'est ce qui
-  permet à 32 thèmes d'être réellement différents sans un seul composant dédié.
+  permet à 34 thèmes d'être réellement différents sans un seul composant dédié.
 - **`renderer/sectionDefs.ts`** décrit chaque section, ses champs éditables, les
   **blocs** qu'elle accepte et ses **variantes**. Le panneau de propriétés du
   builder est **généré** à partir de ce catalogue : ajouter une section ne
@@ -95,6 +97,28 @@ Trois points d'architecture portent tout le reste :
   écrire son rendu fait désormais échouer la compilation, au lieu de rendre
   silencieusement comme une autre variante — le défaut qui a fait passer
   `nav: 'sidebar'` pour `inline` pendant vingt thèmes.
+
+**`engine/plans.ts`** tient le même rôle pour les formules (§60), avec une
+nuance qui explique sa taille : une formule **ne pose pas un axe de plus** au
+moteur, elle pose un **plafond sur un axe existant**, les modules. Verrouiller un
+module verrouille donc par transitivité ses sections, son onglet de builder et
+son entrée du catalogue d'ajout — tout ce monde s'indexe déjà sur
+`project.modules`. Aucun composant ne teste une formule : ils lisent tous ce
+catalogue, et `ui/PlanLock.tsx` sert le même discours partout.
+
+La **troisième formule** l'a vérifié : passer de deux à trois n'a demandé qu'une
+**entrée de plus dans le catalogue** et un champ **`badge`**. La pastille (« Le
+plus simple », « Le plus choisi », « Le plus complet ») était jusque-là arbitrée
+dans l'écran de choix ; elle est **redescendue dans la donnée**, là où elle décrit
+la formule au lieu de décrire une position dans une grille. Aucun composant,
+aucun test de formule, aucun écran n'a été rouvert : c'est la promesse du §48
+tenue, et mesurée.
+
+La garde §56 est **structurelle** : `PlanDef` ne déclare aucun champ monétaire et
+`plans.ts` n'importe rien de `pricing.ts` — la dépendance ne va que dans l'autre
+sens. Un écran qui rend le catalogue des formules est donc dans l'**incapacité
+typée** d'afficher un montant : la règle commerciale cesse d'être une consigne
+pour devenir une propriété du graphe d'imports.
 
 La vitrine suit la même règle : sa démonstration n'est pas une capture, c'est un
 projet construit par le moteur et rendu par `SiteRenderer`. Elle ne peut pas
@@ -151,6 +175,8 @@ paiement de l'acompte, et son projet apparaît en administration.
 | 5 bis — Vitrine et animations | Démonstration live, galerie de designs, chat de qualification, animations pilotées par le thème, 6 sections de réassurance | Terminée |
 | 5 ter — Restauration | Modes de service, offres, formules, établissements, allergènes, fidélité, carte à onglets, commande avec créneau | Terminée |
 | 5 quater — Blocs et variantes | Blocs typés dans les sections, catalogue d'ajout rangé par intention, variantes, section « Contenu libre », duplication | Terminée |
+| 5 quinquies — Formules | Trois formules (modèle, sur mesure, clé en main), étape de choix, verrous et montée en gamme, plafonds de pages et de catalogue, comparaison avec la formule supérieure après révélation, tarif par formule en administration | Terminée |
+| 5 sexies — Services et tarifs | Échelle « qui fait le travail », quotas de rédaction, d'images et de liens entrants par formule, lignes de devis au-delà du quota, bandes de prix disjointes et fourchettes en administration | Terminée |
 | 6 — SaaS | Publication, hébergement, achat effectif des domaines, abonnements | À faire |
 
 Trois réserves, détaillées dans [`FONCTIONNEMENT.md`](FONCTIONNEMENT.md) :

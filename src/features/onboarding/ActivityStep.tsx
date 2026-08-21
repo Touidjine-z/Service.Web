@@ -45,7 +45,7 @@ export default function ActivityStep() {
       title="Quel est votre métier ?"
       subtitle="Votre activité détermine les fonctionnalités et les pages qui vous seront proposées. Vous pourrez tout modifier ensuite."
       back="/"
-      next="/creer/objectifs"
+      next="/creer/formule"
       canContinue={canContinue}
       hint="Sélectionnez une activité pour continuer"
     >
@@ -73,7 +73,7 @@ export default function ActivityStep() {
         {sectors.map((sector) => (
           <section key={sector.id}>
             <h2 className="mb-4 text-xs font-semibold uppercase tracking-wide text-subtle">{sector.label}</h2>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-6 3xl:grid-cols-7">
               {sector.activities.map((activity) => {
                 const isActive = selected === activity.id
                 return (

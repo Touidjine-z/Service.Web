@@ -5,8 +5,10 @@ import type { Product, Project } from '@/engine/types'
 import { getTheme } from '@/engine/themes'
 import { readableOn, withAlpha } from '@/engine/color'
 import { PRODUCT_TAG_LABEL } from '@/engine/catalog'
+import { getPlan, moduleAllowed, planDefOf, upgradeOf } from '@/engine/plans'
 import { createTokens, siteCssVars, type SiteTokens } from '@/renderer/tokens'
 import { formatPrice } from '@/renderer/samples'
+import { PlanUpgradeDialog } from '@/ui/PlanLock'
 import { useProject } from '@/store/ProjectStore'
 
 /**
@@ -26,13 +28,52 @@ export default function TvPage() {
   const navigate = useNavigate()
   const { project } = useProject()
   const [layout, setLayout] = useState<TvLayout>(project.modules.includes('menu') ? 'menu' : 'grid')
+  const [asking, setAsking] = useState(false)
   const shellRef = useRef<HTMLDivElement>(null)
 
   const theme = getTheme(project.themeId)
   const tokens = createTokens(theme, project.colors, 'tv', project.fontPair)
+  // La formule (§60) peut fermer l'ecran TV. L'onglet et le format d'apercu
+  // disparaissent alors du builder, mais /tv reste une route : sans cette garde,
+  // il suffisait de la taper pour obtenir une fonctionnalite qu'on n'a pas
+  // vendue. On n'affiche pas un mur : on explique et on propose la montee.
+  const upgrade = upgradeOf(planDefOf(project))
+  const closed = !moduleAllowed(getPlan(project), 'tv')
 
   function fullscreen() {
     shellRef.current?.requestFullscreen?.().catch(() => undefined)
+  }
+
+  if (closed) {
+    return (
+      <div className="grid min-h-screen place-items-center bg-canvas p-8">
+        <div className="card max-w-md p-6 text-center">
+          <p className="text-lg font-bold text-ink">L'écran TV fait partie du {upgrade?.label.toLowerCase() ?? 'site sur mesure'}</p>
+          <p className="mt-3 text-sm leading-relaxed text-muted">
+            Il affiche votre carte ou vos produits en 16:9, sur un écran de vitrine ou de salle.
+            Votre formule actuelle ne le contient pas.
+          </p>
+          <div className="mt-5 flex flex-col gap-2">
+            {upgrade && (
+              <button type="button" className="btn-primary w-full" onClick={() => setAsking(true)}>
+                Voir ce que change le {upgrade.label.toLowerCase()}
+              </button>
+            )}
+            <button type="button" className="btn-ghost w-full" onClick={() => navigate('/creer/site')}>
+              <ArrowLeft size={16} /> Retour au builder
+            </button>
+          </div>
+        </div>
+        {asking && (
+          <PlanUpgradeDialog
+            feature="L'écran TV"
+            explain="Votre carte ou vos produits affichés en 16:9 sur un écran de vitrine ou de salle, mis à jour en même temps que votre site."
+            onClose={() => setAsking(false)}
+            onUpgraded={() => setAsking(false)}
+          />
+        )}
+      </div>
+    )
   }
 
   return (

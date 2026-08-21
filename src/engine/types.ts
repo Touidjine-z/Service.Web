@@ -56,10 +56,13 @@ export type ThemeId =
      soin, six pour le commerce, l'artisanat et la creation. */
   | 'cabinet' | 'serene' | 'tribune' | 'brief' | 'estate' | 'civic'
   | 'atelier' | 'marche' | 'neon' | 'studio' | 'affiche' | 'vitrine'
+  /* Deux designs d'agence : la page d'offre commerciale et la grille de
+     references. */
+  | 'agence' | 'repere'
   | 'custom'
 
 /** Formule retenue (§60). Deux valeurs, aucun ordre de prix implicite. */
-export type PlanId = 'template' | 'website'
+export type PlanId = 'template' | 'website' | 'turnkey'
 
 /**
  * Ce qu'une formule permet, dit dans le vocabulaire que le moteur parle deja :
@@ -74,6 +77,23 @@ export interface PlanLimits {
   maxCatalogItems: number
   /** Droit au theme « custom » (design reellement dessine). */
   customTheme: boolean
+}
+
+/**
+ * Ce que NOUS faisons pour le client dans cette formule. Ce ne sont pas des
+ * fonctionnalites du logiciel mais du travail humain : c'est ce qui separe
+ * vraiment une formule de la suivante, comme chez les agences.
+ *
+ * Des quantites, jamais des montants (§56) : le prix des unites au-dela du
+ * quota vit dans PricingRules, pas ici.
+ */
+export interface PlanServices {
+  /** Pages dont nous redigeons le contenu. */
+  writtenPages: number
+  /** Images d'illustration achetees et integrees pour le client. */
+  stockImages: number
+  /** Liens entrants poses pour le referencement. Jamais factures a l'unite. */
+  backlinks: number
 }
 
 /**
@@ -93,6 +113,14 @@ export interface PlanDef {
   /** Puces « Pas dans cette formule ». Vide sur la formule haute. */
   excludes: string[]
   limits: PlanLimits
+  /** Ce que nous prenons en charge : redaction, images, referencement. */
+  services: PlanServices
+  /**
+   * Pastille de la carte (« Le plus simple », « Le plus choisi »). Elle vit dans
+   * le catalogue et non dans l'ecran : sans cela, ajouter une troisieme formule
+   * obligerait a rouvrir PlanStep pour arbitrer laquelle porte quel libelle.
+   */
+  badge?: string
   /** Formule vers laquelle on pousse. Absente = formule haute, on ne descend pas. */
   upgradeTo?: PlanId
   recommended?: boolean

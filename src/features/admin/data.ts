@@ -1,6 +1,7 @@
 import type { Payment, Project, ProjectStatus } from '@/engine/types'
 import { computeQuote, type PricingRules, type Quote } from '@/engine/pricing'
 import { getActivity } from '@/engine/activities'
+import { planDefOf } from '@/engine/plans'
 import { listPayments, listProjects, loadPricingRules, type StoredLead, listLeads } from '@/store/db'
 import { DEFAULT_PRICING_RULES } from '@/engine/pricing'
 
@@ -15,6 +16,7 @@ export interface AdminRow {
   payments: Payment[]
   paid: number
   activityLabel: string
+  planLabel: string
   clientName: string
   updatedAt: string
 }
@@ -29,6 +31,17 @@ export interface AdminData {
 export function activityLabelOf(project: Project): string {
   if (project.activityId === 'custom') return project.customActivity || 'Autre activité'
   return getActivity(project.activityId)?.label ?? '—'
+}
+
+/**
+ * Formule du projet (§60). Un projet enregistre AVANT les formules n'a pas de
+ * champ `plan` : le moteur le sert en sur-mesure, mais son client n'a jamais
+ * choisi. On le dit, sinon l'administration lit un choix la ou il n'y a qu'un
+ * repli — et croit a tort que la formule haute a ete preferee a la basse.
+ */
+export function planLabelOf(project: Project): string {
+  const { label } = planDefOf(project)
+  return project.plan ? label : `${label} (avant les formules)`
 }
 
 export function clientNameOf(project: Project): string {
@@ -55,6 +68,7 @@ export async function loadAdminData(): Promise<AdminData> {
       payments: own,
       paid: own.filter((p) => p.status === 'paid').reduce((sum, p) => sum + p.deposit, 0),
       activityLabel: activityLabelOf(project),
+      planLabel: planLabelOf(project),
       clientName: clientNameOf(project),
       updatedAt: row.updatedAt,
     }
@@ -90,6 +104,7 @@ export function matchesSearch(row: AdminRow, query: string): boolean {
     row.project.lead?.phone ?? '',
     row.project.identity.city,
     row.activityLabel,
+    row.planLabel,
   ].join(' ').toLowerCase()
   return haystack.includes(q)
 }

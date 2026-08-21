@@ -1,9 +1,13 @@
 import puppeteer from 'puppeteer-core'
-const OUT = process.argv[2] || '.'
+import { mkdirSync } from 'node:fs'
+// Par defaut, les captures sortent DU depot : `npm run smoke` ne passe aucun
+// argument, et le dossier courant est la racine du projet.
+const OUT = process.argv[2] || process.env.SHOTS || '/tmp/studio-captures'
+mkdirSync(OUT, { recursive: true })
 const errors = []
 const step = (m) => console.log('  …', m)
 
-const b = await puppeteer.launch({ executablePath: '/usr/bin/google-chrome', headless: 'new', args: ['--no-sandbox'] })
+const b = await puppeteer.launch({ executablePath: '/usr/bin/google-chrome', headless: 'new', args: ['--no-sandbox', '--disable-gpu'] })
 const page = await b.newPage()
 await page.setViewport({ width: 1500, height: 1000 })
 page.on('pageerror', (e) => errors.push(`pageerror: ${e.message}`))
@@ -84,10 +88,21 @@ await shot('22-admin-paiements')
 // evolution des modules par defaut d'un metier.
 await click('Projets')
 await new Promise(r => setTimeout(r, 500))
-const totalBefore = await page.evaluate(() => {
-  const cells = document.querySelector('tbody tr').querySelectorAll('td')
-  return Number(cells[4].textContent.replace(/[^\d]/g, ''))
-})
+// Lecture par en-tete, jamais par index : ajouter une colonne au tableau ne
+// doit pas faire lire la date a la place du prix.
+const readCell = (header) => page.evaluate((h) => {
+  const heads = [...document.querySelectorAll('thead th')].map((t) => t.textContent.trim().toLowerCase())
+  const i = heads.indexOf(h.toLowerCase())
+  if (i === -1) return null
+  return document.querySelector('tbody tr').querySelectorAll('td')[i].textContent.trim()
+}, header)
+
+const num = (text) => (text === null ? null : Number(text.replace(/[^\d]/g, '')))
+
+const totalBefore = num(await readCell('Prix'))
+const planLabel = await readCell('Formule')
+if (totalBefore === null) errors.push('admin : colonne « Prix » introuvable dans le tableau des projets')
+if (!planLabel) errors.push('admin : colonne « Formule » introuvable — le tarif à modifier ne peut pas être ciblé')
 
 step('tarification')
 await click('Tarification')
@@ -95,13 +110,23 @@ await new Promise(r => setTimeout(r, 500))
 const pricing = (await page.evaluate(() => document.body.innerText)).toLowerCase()
 if (!/prix de base/.test(pricing)) errors.push('admin : éditeur de tarifs absent')
 // Modifier le prix de base doit changer le devis du projet
-await page.evaluate(() => {
-  const lab = [...document.querySelectorAll('label')].find((e) => e.textContent.trim().startsWith('Prix de base'))
+// Chaque formule a son propre « Prix de base » : viser celle du projet, et
+// travailler en ECART (+500 €) plutot que sur une valeur en dur.
+const priceBefore = await page.evaluate((label) => {
+  const section = [...document.querySelectorAll('section')].find((s) => s.querySelector('.label')?.textContent.trim() === label)
+  const lab = section && [...section.querySelectorAll('label')].find((e) => e.textContent.trim().startsWith('Prix de base'))
+  return lab ? Number(lab.querySelector('input').value) : null
+}, planLabel)
+if (priceBefore === null) errors.push(`tarification : « Prix de base » de la formule « ${planLabel} » introuvable`)
+
+const priceAfter = (priceBefore ?? 0) + 500
+await page.evaluate((label, value) => {
+  const section = [...document.querySelectorAll('section')].find((s) => s.querySelector('.label')?.textContent.trim() === label)
+  const lab = [...section.querySelectorAll('label')].find((e) => e.textContent.trim().startsWith('Prix de base'))
   const input = lab.querySelector('input')
-  const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set
-  setter.call(input, '900')
+  Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set.call(input, String(value))
   input.dispatchEvent(new Event('input', { bubbles: true }))
-})
+}, planLabel, priceAfter)
 await new Promise(r => setTimeout(r, 300))
 await shot('23-admin-tarifs')
 await click('Enregistrer les tarifs')
@@ -110,10 +135,7 @@ await new Promise(r => setTimeout(r, 900))
 step('répercussion du tarif')
 await click('Projets')
 await new Promise(r => setTimeout(r, 700))
-const totalAfter = await page.evaluate(() => {
-  const cells = document.querySelector('tbody tr').querySelectorAll('td')
-  return Number(cells[4].textContent.replace(/[^\d]/g, ''))
-})
+const totalAfter = num(await readCell('Prix'))
 if (totalAfter - totalBefore !== 500) {
   errors.push(`tarification : ${totalBefore} € -> ${totalAfter} €, ecart de ${totalAfter - totalBefore} € au lieu de 500 €`)
 }
@@ -122,7 +144,10 @@ step('historique')
 await click('Tarification')
 await new Promise(r => setTimeout(r, 600))
 const hist = await page.evaluate(() => document.body.innerText)
-if (!/400 → 900/.test(hist.replace(/\s+/g, ' '))) errors.push('tarification : le changement n\'est pas historisé')
+const histLine = new RegExp(`${priceBefore} → ${priceAfter}`)
+if (!histLine.test(hist.replace(/\s+/g, ' '))) {
+  errors.push(`tarification : ${priceBefore} → ${priceAfter} absent de l'historique`)
+}
 
 step('détail projet')
 await click('Projets')

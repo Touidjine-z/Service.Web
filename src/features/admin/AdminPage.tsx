@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, CreditCard, LayoutDashboard, Loader2, Search, Tag, Users } from 'lucide-react'
 import { formatMoney } from '@/engine/pricing'
+import { PLANS, getPlan } from '@/engine/plans'
 import { STATUSES, statusLabel } from '@/engine/status'
 import { loadAdminData, matchesFilter, matchesSearch, formatDate, PROJECT_FILTERS, type AdminData, type AdminRow } from './data'
 import ProjectDetail from './ProjectDetail'
@@ -109,7 +110,7 @@ export default function AdminPage() {
                 <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-subtle" />
                 <input
                   className="field !py-2 !pl-9 text-sm"
-                  placeholder="Rechercher un client, une entreprise, une ville…"
+                  placeholder="Rechercher un client, une entreprise, une ville, une formule…"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                 />
@@ -155,36 +156,68 @@ function Empty({ children }: { children: React.ReactNode }) {
   return <p className="card mt-4 px-4 py-10 text-center text-sm text-subtle">{children}</p>
 }
 
+/**
+ * Repartition des projets par formule (§60). C'est l'instrument de mesure de
+ * l'option : si la formule basse amene des projets neufs, ce compteur monte
+ * sans que l'autre baisse ; si elle cannibalise, les deux bougent en miroir.
+ * Compte la liste AFFICHEE, filtres et recherche compris — sinon on ne pourrait
+ * pas lire la repartition d'un mois ou d'un statut donne.
+ */
+function PlanCounts({ rows }: { rows: AdminRow[] }) {
+  const counts = PLANS.map((plan) => ({
+    plan,
+    count: rows.filter((r) => getPlan(r.project) === plan.id).length,
+  }))
+  // Les projets d'avant les formules sont comptes dans la formule qui les sert,
+  // mais signales a part : personne ne les a choisis.
+  const legacy = rows.filter((r) => !r.project.plan).length
+
+  return (
+    <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-muted">
+      {counts.map(({ plan, count }) => (
+        <span key={plan.id} className="rounded-lg border border-line px-2.5 py-1">
+          {plan.label} : <strong className="text-ink">{count}</strong>
+        </span>
+      ))}
+      {legacy > 0 && <span className="text-subtle">dont {legacy} avant les formules</span>}
+    </div>
+  )
+}
+
 function ProjectsTable({ rows, onOpen }: { rows: AdminRow[]; onOpen: (id: string) => void }) {
   if (!rows.length) return <Empty>Aucun projet pour ce filtre.</Empty>
   return (
-    <div className="card mt-4 overflow-x-auto">
-      <table className="w-full min-w-[860px] text-sm">
-        <thead className="border-b border-line text-left text-[11px] uppercase tracking-wide text-subtle">
-          <tr>
-            <Th>Client</Th><Th>Entreprise</Th><Th>Activité</Th><Th>Date</Th>
-            <Th align="right">Prix</Th><Th align="right">Acompte</Th><Th>Statut</Th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-line">
-          {rows.map((row) => (
-            <tr key={row.project.id} className="cursor-pointer hover:bg-canvas" onClick={() => onOpen(row.project.id)}>
-              <Td>{row.clientName}</Td>
-              <Td>{row.project.identity.businessName || '—'}</Td>
-              <Td>{row.activityLabel}</Td>
-              <Td>{formatDate(row.updatedAt)}</Td>
-              <Td align="right">{formatMoney(row.quote.total, row.quote.currency)}</Td>
-              <Td align="right">
-                {row.paid > 0
-                  ? <span className="font-semibold text-emerald-700">{formatMoney(row.paid, row.quote.currency)}</span>
-                  : <span className="text-subtle">{formatMoney(row.quote.deposit, row.quote.currency)}</span>}
-              </Td>
-              <Td><StatusBadge status={row.project.status} /></Td>
+    <>
+      <PlanCounts rows={rows} />
+      <div className="card mt-3 overflow-x-auto">
+        <table className="w-full min-w-[980px] text-sm">
+          <thead className="border-b border-line text-left text-[11px] uppercase tracking-wide text-subtle">
+            <tr>
+              <Th>Client</Th><Th>Entreprise</Th><Th>Activité</Th><Th>Formule</Th><Th>Date</Th>
+              <Th align="right">Prix</Th><Th align="right">Acompte</Th><Th>Statut</Th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody className="divide-y divide-line">
+            {rows.map((row) => (
+              <tr key={row.project.id} className="cursor-pointer hover:bg-canvas" onClick={() => onOpen(row.project.id)}>
+                <Td>{row.clientName}</Td>
+                <Td>{row.project.identity.businessName || '—'}</Td>
+                <Td>{row.activityLabel}</Td>
+                <Td>{row.planLabel}</Td>
+                <Td>{formatDate(row.updatedAt)}</Td>
+                <Td align="right">{formatMoney(row.quote.total, row.quote.currency)}</Td>
+                <Td align="right">
+                  {row.paid > 0
+                    ? <span className="font-semibold text-emerald-700">{formatMoney(row.paid, row.quote.currency)}</span>
+                    : <span className="text-subtle">{formatMoney(row.quote.deposit, row.quote.currency)}</span>}
+                </Td>
+                <Td><StatusBadge status={row.project.status} /></Td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </>
   )
 }
 

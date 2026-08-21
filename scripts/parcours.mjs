@@ -1,18 +1,25 @@
 import puppeteer from 'puppeteer-core'
+import { mkdirSync } from 'node:fs'
 
 const BASE = 'http://localhost:5199'
-const OUT = process.argv[2] || '.'
+// Par defaut, les captures sortent DU depot : `npm run smoke` ne passe aucun
+// argument, et le dossier courant est la racine du projet.
+const OUT = process.argv[2] || process.env.SHOTS || '/tmp/studio-captures'
+mkdirSync(OUT, { recursive: true })
 const errors = []
 
 // Detecteur de fuite tarifaire (§56) : aucun prix de REALISATION ne doit
 // apparaitre avant la page finale. Les mentions de tarifs du client sur son
 // propre site sont legitimes, on ne cible que le vocabulaire de la plateforme.
+// Seule tournure exemptee, parce qu'elle est l'inverse d'une fuite : ANNONCER
+// que le prix viendra a la fin, le libelle pose sous les cartes de formule
+// (§60). La mention nue, elle, reste traquee.
 const LEAK = /(prix de r[ée]alisation|co[ûu]t du site|acompte|votre devis|total [àa] payer|tarif de la prestation web)/i
 
 const browser = await puppeteer.launch({
   executablePath: '/usr/bin/google-chrome',
   headless: 'new',
-  args: ['--no-sandbox', '--window-size=1600,1000'],
+  args: ['--no-sandbox', '--disable-gpu', '--window-size=1600,1000'],
 })
 const page = await browser.newPage()
 await page.setViewport({ width: 1600, height: 1000 })
@@ -47,6 +54,17 @@ await go('/creer/activite')
 await clickText('Restaurant')
 await checkLeak('activite')
 await shot('01-activite')
+
+// La formule (§60) s'intercale entre l'activite et les objectifs : c'est
+// l'ecran ou une comparaison chiffree serait la plus tentante, donc le plus
+// surveille.
+await go('/creer/formule')
+const plans = await page.evaluate(() => document.body.innerText)
+if (!/Choisir le site modèle/i.test(plans) || !/Choisir le site sur mesure/i.test(plans)) {
+  errors.push('formule : les deux formules ne sont pas proposées')
+}
+await checkLeak('formule')
+await shot('01b-formule')
 
 await go('/creer/objectifs')
 await checkLeak('objectifs')

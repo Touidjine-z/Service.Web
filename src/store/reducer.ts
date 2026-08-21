@@ -5,6 +5,7 @@ import {
   createEmptyProject, createSection, enforcePlan, slugify, syncPagesWithModules, uid,
 } from '@/engine/project'
 import { catalogSize, planLimits, planLoss } from '@/engine/plans'
+import { hasReached } from '@/engine/status'
 import { resolveBlocks } from '@/renderer/sectionDefs'
 import { resolveAreas, shiftLayout } from '@/renderer/fluid'
 import { MODULE_BY_ID } from '@/engine/modules'
@@ -471,9 +472,13 @@ function refusedByPlan(project: Project, action: Action): boolean {
     case 'setTheme':
       return action.themeId === 'custom' && !limits.customTheme
     case 'setPlan':
-      // Une descente qui detruirait des pages ou du catalogue est refusee : le
-      // client supprime lui-meme, on ne tronque pas son travail.
-      return planLoss(project, action.plan).blockers.length > 0
+      // Un acompte fige total, acompte et solde : changer de formule apres
+      // rendrait le paiement deja encaisse faux. Le gel appartient au moteur —
+      // porte par un seul ecran, il suffisait d'entrer par un autre (§60).
+      // Une descente qui detruirait des pages ou du catalogue est refusee aussi :
+      // le client supprime lui-meme, on ne tronque pas son travail.
+      return hasReached(project.status, 'deposit-paid')
+        || planLoss(project, action.plan).blockers.length > 0
     default:
       return false
   }

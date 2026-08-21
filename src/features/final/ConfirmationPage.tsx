@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Check, Globe, Mail, Printer } from 'lucide-react'
 import type { Payment } from '@/engine/types'
 import { formatMoney } from '@/engine/pricing'
+import { hasReached } from '@/engine/status'
 import { paymentsForProject } from '@/store/db'
 import { useProject } from '@/store/ProjectStore'
 
@@ -12,11 +13,27 @@ export default function ConfirmationPage() {
   const { project, quote } = useProject()
   const [payment, setPayment] = useState<Payment | null>(null)
 
+  /**
+   * Garde §56. Cet ecran affiche un total, un acompte et un solde : il n'a de
+   * sens qu'apres un acompte encaisse. Sans cette garde, ouvrir /confirmation
+   * directement — signet, historique, URL recopiee — montrait le devis d'un
+   * projet en cours de construction ET annoncait un paiement qui n'a pas eu
+   * lieu. La redirection passe par un effet : appeler `navigate` pendant le
+   * rendu laisse le client sur une page blanche.
+   */
+  const allowed = project.priceRevealed && hasReached(project.status, 'deposit-paid')
+
+  useEffect(() => {
+    if (!allowed) navigate('/creer/final', { replace: true })
+  }, [allowed, navigate])
+
   useEffect(() => {
     paymentsForProject(project.id)
       .then((list) => setPayment(list.filter((p) => p.status === 'paid').pop() ?? null))
       .catch(() => undefined)
   }, [project.id])
+
+  if (!allowed) return null
 
   const lead = project.lead
   const domain = project.domain

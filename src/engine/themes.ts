@@ -1,7 +1,7 @@
 import type { ThemeId, ColorScheme } from './types'
 
 /**
- * Les 32 themes (§10). Un theme n'est pas qu'une palette : il change la
+ * Les 34 themes (§10). Un theme n'est pas qu'une palette : il change la
  * structure, la navigation, la typographie, les boutons, les cartes, le hero,
  * le footer, les espacements, les animations et le traitement des images.
  * Le renderer lit ces tokens ; aucun theme n'a de composant dedie.
@@ -9,8 +9,8 @@ import type { ThemeId, ColorScheme } from './types'
 
 export type NavLayout = 'inline' | 'centered' | 'split' | 'stacked' | 'sidebar' | 'minimal'
 export type HeroLayout = 'centered' | 'split' | 'fullbleed' | 'overlay' | 'boxed' | 'editorial' | 'stacked'
-export type CardStyle = 'flat' | 'outlined' | 'elevated' | 'glass' | 'bordered-heavy' | 'overlap' | 'ribbon' | 'inset' | 'stamp'
-export type ButtonStyle = 'solid' | 'pill' | 'outline' | 'sharp' | 'underline' | 'gradient' | 'soft' | 'block'
+export type CardStyle = 'flat' | 'outlined' | 'elevated' | 'glass' | 'bordered-heavy' | 'overlap' | 'ribbon' | 'inset' | 'stamp' | 'panel'
+export type ButtonStyle = 'solid' | 'pill' | 'outline' | 'sharp' | 'underline' | 'gradient' | 'soft' | 'block' | 'raised'
 export type ImageTreatment = 'rounded' | 'sharp' | 'circle' | 'arch' | 'duotone' | 'framed' | 'leaf'
 export type FooterLayout = 'columns' | 'compact' | 'centered' | 'large'
 export type Motion = 'none' | 'subtle' | 'lively'
@@ -64,6 +64,8 @@ const LORA = "'Lora', Georgia, 'Times New Roman', serif"
 /** Dessinee par le Braille Institute pour la basse vision : I, l, 1 et O, 0 ne
  *  se ressemblent pas. C'est le parti pris du theme « Civic ». */
 const HYPER = "'Atkinson Hyperlegible', 'Inter', system-ui, sans-serif"
+/** Sans a large chasse des sites d'agence : lisible en gros titre commercial. */
+const MANROPE = "'Manrope', 'Inter', system-ui, sans-serif"
 
 export const THEMES: Theme[] = [
   {
@@ -282,6 +284,20 @@ export const THEMES: Theme[] = [
     headingFont: FRAUNCES, bodyFont: SANS, headingWeight: 700, headingTransform: 'none', letterSpacing: 'tight',
     nav: 'sidebar', hero: 'fullbleed', card: 'stamp', button: 'pill', image: 'leaf', footer: 'large',
     radius: 26, sectionPadding: 'airy', containerWidth: 'normal', motion: 'lively',
+  },
+  {
+    id: 'agence', name: 'Agence', tagline: 'Bleu franc, blocs alternés, offre en avant',
+    colors: { primary: '#0B63CE', secondary: '#0B2545', accent: '#F97316', background: '#FFFFFF', text: '#0F1B2D', button: '#0B63CE', card: '#FFFFFF', header: '#FFFFFF', footer: '#0B2545' },
+    headingFont: MANROPE, bodyFont: SANS, headingWeight: 800, headingTransform: 'none', letterSpacing: 'tight',
+    nav: 'split', hero: 'split', card: 'panel', button: 'raised', image: 'rounded', footer: 'large',
+    radius: 12, sectionPadding: 'normal', containerWidth: 'wide', sectionEdge: 'fade', motion: 'subtle',
+  },
+  {
+    id: 'repere', name: 'Repère', tagline: 'Vert net, vignettes encadrées',
+    colors: { primary: '#10986B', secondary: '#1D3E63', accent: '#7FD1AE', background: '#FFFFFF', text: '#15211D', button: '#10986B', card: '#FFFFFF', header: '#FFFFFF', footer: '#12241E' },
+    headingFont: OUTFIT, bodyFont: SANS, headingWeight: 700, headingTransform: 'none', letterSpacing: 'tight',
+    nav: 'inline', hero: 'stacked', card: 'panel', button: 'pill', image: 'framed', footer: 'columns',
+    radius: 14, sectionPadding: 'airy', containerWidth: 'wide', sectionEdge: 'rule', motion: 'subtle',
   },
   {
     id: 'custom', name: 'Custom', tagline: 'Base neutre à personnaliser entièrement',
